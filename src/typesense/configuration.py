@@ -1,19 +1,34 @@
-from .exceptions import ConfigError
-from .logger import logger
+"""
+This module provides configuration management for the Typesense Instance.
+
+Classes:
+    - Config: Handles loading and accessing configuration settings.
+    - Node: Represents a node in the Typesense cluster.
+
+Functions:
+    - load_config: Loads configuration from a file.
+    - get_setting: Retrieves a specific setting from the configuration.
+    - set_setting: Updates a specific setting in the configuration.
+
+Exceptions:
+    - ConfigError: Custom exception for configuration-related errors.
+"""
+
+from __future__ import annotations
+
+import time
+from typing import Literal, NotRequired, TypedDict, Union
 from urllib.parse import urlparse
 
-class Node(object):
-    def __init__(self, url):
-        parsed = urlparse(url);
-        if not parsed.hostname:
-            raise ConfigError('Node URL does not contain the host name.')
-        if not parsed.port:
-            raise ConfigError('Node URL does not contain the port.')
-        if not parsed.scheme:
-            raise ConfigError('Node URL does not contain the protocol.')
-        self.__init__(parsed.hostname, parsed.port, parsed.path, parsed.scheme)
 
-    def __init__(self, host, port, path, protocol):
+class Node(object):
+    def __init__(
+        self,
+        host: str,
+        port: str | int,
+        path: str,
+        protocol: Literal['http', 'https'] | str,
+    ):
         self.host = host
         self.port = port
         self.path = path
@@ -21,6 +36,21 @@ class Node(object):
 
         # Used to skip bad hosts
         self.healthy = True
+
+        # Used to track the last time this node was accessed
+        self.last_access_ts: int = int(time.time())
+
+    @classmethod
+    def from_url(cls, url: str) -> 'Node':
+        parsed = urlparse(url)
+        if not parsed.hostname:
+            raise ConfigError('Node URL does not contain the host name.')
+        if not parsed.port:
+            raise ConfigError('Node URL does not contain the port.')
+        if not parsed.scheme:
+            raise ConfigError('Node URL does not contain the protocol.')
+
+        return cls(parsed.hostname, parsed.port, parsed.path, parsed.scheme)
 
     def url(self):
         return '{0}://{1}:{2}{3}'.format(self.protocol, self.host, self.port, self.path)
@@ -34,7 +64,7 @@ class Configuration(object):
         self.nodes = []
         for node_config in config_dict.get('nodes', []):
             if isinstance(node_config, str):
-                node = Node(node_config)
+                node = Node.from_url(node_config)
             else:
                 node = Node(node_config['host'], node_config['port'], node_config.get('path', ''), node_config['protocol'])
             self.nodes.append(node)
@@ -43,7 +73,7 @@ class Configuration(object):
         if not nearest_node:
             self.nearest_node = None
         elif isinstance(nearest_node, str):
-            self.nearest_node = Node(nearest_node)
+            self.nearest_node = Node.from_url(nearest_node)
         else:
             self.nearest_node = Node(nearest_node['host'], nearest_node['port'], nearest_node.get('path', ''), nearest_node['protocol'])
 
