@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-import requests_mock
 
 from tests.utils.object_assertions import (
     assert_match_object,
@@ -14,8 +13,6 @@ from tests.utils.version import is_v30_or_above
 from typesense.api_call import ApiCall
 from typesense.collections import Collections
 from typesense.client import Client
-from typesense.synonym import Synonym, SynonymDeleteSchema
-from typesense.synonyms import SynonymSchema
 
 
 pytestmark = pytest.mark.skipif(
@@ -50,52 +47,6 @@ def test_init(fake_api_call: ApiCall) -> None:
         synonym._endpoint_path()  # noqa: WPS437
         == "/collections/companies/synonyms/company_synonym"
     )
-
-
-def test_retrieve(fake_synonym: Synonym) -> None:
-    """Test that the Synonym object can retrieve an synonym."""
-    json_response: SynonymSchema = {
-        "id": "company_synonym",
-        "synonyms": ["companies", "corporations", "firms"],
-    }
-
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "/collections/companies/synonyms/company_synonym",
-            json=json_response,
-        )
-
-        response = fake_synonym.retrieve()
-
-        assert len(mock.request_history) == 1
-        assert mock.request_history[0].method == "GET"
-        assert (
-            mock.request_history[0].url
-            == "http://nearest:8108/collections/companies/synonyms/company_synonym"
-        )
-        assert response == json_response
-
-
-def test_delete(fake_synonym: Synonym) -> None:
-    """Test that the Synonym object can delete an synonym."""
-    json_response: SynonymDeleteSchema = {
-        "id": "company_synonym",
-    }
-    with requests_mock.Mocker() as mock:
-        mock.delete(
-            "/collections/companies/synonyms/company_synonym",
-            json=json_response,
-        )
-
-        response = fake_synonym.delete()
-
-        assert len(mock.request_history) == 1
-        assert mock.request_history[0].method == "DELETE"
-        assert (
-            mock.request_history[0].url
-            == "http://nearest:8108/collections/companies/synonyms/company_synonym"
-        )
-        assert response == {"id": "company_synonym"}
 
 
 def test_actual_retrieve(

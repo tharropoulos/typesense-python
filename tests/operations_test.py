@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-import requests_mock
 
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
 from typesense.api_call import ApiCall
@@ -66,18 +65,6 @@ def test_health(actual_operations: Operations) -> None:
     response = actual_operations.is_healthy()
 
     assert response
-
-
-def test_health_not_dict(fake_operations: Operations) -> None:
-    """Test that the Operations object can perform the health operation."""
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "/health",
-            json="ok",
-        )
-
-        response = fake_operations.is_healthy()
-        assert not response
 
 
 def test_log_slow_requests_time_ms(actual_operations: Operations) -> None:

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-import requests_mock
 from dotenv import load_dotenv
 
 from tests.utils.object_assertions import (
@@ -43,55 +42,6 @@ def test_init(fake_api_call: ApiCall) -> None:
         conversation_model._endpoint_path  # noqa: WPS437
         == "/conversations/models/conversation_model_id"
     )
-
-
-def test_retrieve(fake_conversation_model: ConversationModel) -> None:
-    """Test that the ConversationModel object can retrieve a conversation_model."""
-    json_response: ConversationModelSchema = {
-        "api_key": "abc",
-        "id": "conversation_model_id",
-        "max_bytes": 1000000,
-        "model_name": "conversation_model_name",
-        "system_prompt": "This is a system prompt",
-    }
-
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "/conversations/models/conversation_model_id",
-            json=json_response,
-        )
-
-        response = fake_conversation_model.retrieve()
-
-        assert len(mock.request_history) == 1
-        assert mock.request_history[0].method == "GET"
-        assert (
-            mock.request_history[0].url
-            == "http://nearest:8108/conversations/models/conversation_model_id"
-        )
-        assert response == json_response
-
-
-def test_delete(fake_conversation_model: ConversationModel) -> None:
-    """Test that the ConversationModel object can delete a conversation_model."""
-    json_response: ConversationModelDeleteSchema = {
-        "id": "conversation_model_id",
-    }
-    with requests_mock.Mocker() as mock:
-        mock.delete(
-            "/conversations/models/conversation_model_id",
-            json=json_response,
-        )
-
-        response = fake_conversation_model.delete()
-
-        assert len(mock.request_history) == 1
-        assert mock.request_history[0].method == "DELETE"
-        assert (
-            mock.request_history[0].url
-            == "http://nearest:8108/conversations/models/conversation_model_id"
-        )
-        assert response == json_response
 
 
 @pytest.mark.open_ai

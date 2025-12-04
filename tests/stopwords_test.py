@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import requests_mock
 
 from tests.utils.object_assertions import (
     assert_match_object,
@@ -55,59 +54,6 @@ def test_get_existing_stopword(fake_stopwords: Stopwords) -> None:
     assert len(fake_stopwords.stopwords_sets) == 1
 
     assert stopword is fetched_stopword
-
-
-def test_retrieve(fake_stopwords: Stopwords) -> None:
-    """Test that the Stopwords object can retrieve stopwords."""
-    json_response: StopwordsRetrieveSchema = {
-        "stopwords": [
-            {
-                "id": "company_stopwords",
-                "locale": "",
-                "stopwords": ["and", "is", "the"],
-            },
-        ],
-    }
-
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "http://nearest:8108/stopwords",
-            json=json_response,
-        )
-
-        response = fake_stopwords.retrieve()
-
-        assert len(response) == 1
-        assert response["stopwords"][0] == json_response["stopwords"][0]
-        assert response == json_response
-
-
-def test_create(fake_stopwords: Stopwords) -> None:
-    """Test that the Stopwords object can create a stopword."""
-    json_response: StopwordSchema = {
-        "id": "company_stopwords",
-        "locale": "",
-        "stopwords": ["and", "is", "the"],
-    }
-
-    with requests_mock.Mocker() as mock:
-        mock.put(
-            "http://nearest:8108/stopwords/company_stopwords",
-            json=json_response,
-        )
-
-        fake_stopwords.upsert(
-            "company_stopwords",
-            {"stopwords": ["and", "is", "the"]},
-        )
-
-        assert mock.call_count == 1
-        assert mock.called is True
-        assert mock.last_request.method == "PUT"
-        assert (
-            mock.last_request.url == "http://nearest:8108/stopwords/company_stopwords"
-        )
-        assert mock.last_request.json() == {"stopwords": ["and", "is", "the"]}
 
 
 def test_actual_create(actual_stopwords: Stopwords, delete_all_stopwords: None) -> None:

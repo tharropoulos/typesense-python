@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import requests_mock
 import pytest
 
 from tests.utils.object_assertions import (
@@ -74,62 +73,6 @@ def test_get_existing_override(fake_overrides: Overrides) -> None:
     assert len(fake_overrides.overrides) == 1
 
     assert override is fetched_override
-
-
-def test_retrieve(fake_overrides: Overrides) -> None:
-    """Test that the Overrides object can retrieve overrides."""
-    json_response: OverrideRetrieveSchema = {
-        "overrides": [
-            {
-                "id": "company_override",
-                "rule": {"match": "exact", "query": "companies"},
-            },
-        ],
-    }
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "http://nearest:8108/collections/companies/overrides/",
-            json=json_response,
-        )
-
-        response = fake_overrides.retrieve()
-
-    assert len(response) == 1
-    assert response["overrides"][0] == {
-        "id": "company_override",
-        "rule": {"match": "exact", "query": "companies"},
-    }
-    assert response == json_response
-
-
-def test_create(fake_overrides: Overrides) -> None:
-    """Test that the Overrides object can create a override."""
-    json_response: OverrideSchema = {
-        "id": "company_override",
-        "rule": {"match": "exact", "query": "companies"},
-    }
-
-    with requests_mock.Mocker() as mock:
-        mock.put(
-            "http://nearest:8108/collections/companies/overrides/company_override",
-            json=json_response,
-        )
-
-        fake_overrides.upsert(
-            "company_override",
-            {"rule": {"match": "exact", "query": "companies"}},
-        )
-
-        assert mock.call_count == 1
-        assert mock.called is True
-        assert mock.last_request.method == "PUT"
-        assert (
-            mock.last_request.url
-            == "http://nearest:8108/collections/companies/overrides/company_override"
-        )
-        assert mock.last_request.json() == {
-            "rule": {"match": "exact", "query": "companies"},
-        }
 
 
 def test_actual_create(

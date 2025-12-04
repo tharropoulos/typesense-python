@@ -6,7 +6,6 @@ import os
 import sys
 
 import pytest
-import requests_mock
 
 if sys.version_info >= (3, 11):
     import typing
@@ -75,64 +74,6 @@ def test_get_existing_conversations_model(
     assert len(fake_conversations_models.conversations_models) == 1
 
     assert conversations_model is fetched_conversations_model
-
-
-def test_retrieve(fake_conversations_models: ConversationsModels) -> None:
-    """Test that the ConversationsModels object can retrieve conversations_models."""
-    json_response: typing.List[ConversationModelSchema] = [
-        {
-            "api_key": "abc",
-            "id": "1",
-            "max_bytes": 1000000,
-            "model_name": "openAI-gpt-3",
-            "system_prompt": "This is a system prompt",
-        },
-    ]
-
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "http://nearest:8108/conversations/models",
-            json=json_response,
-        )
-
-        response = fake_conversations_models.retrieve()
-
-        assert len(response) == 1
-        assert response[0] == json_response[0]
-        assert response == json_response
-
-
-def test_create(fake_conversations_models: ConversationsModels) -> None:
-    """Test that the ConversationsModels object can create a conversations_model."""
-    json_response: ConversationModelSchema = {
-        "api_key": "abc",
-        "id": "1",
-        "max_bytes": 1000000,
-        "model_name": "openAI-gpt-3",
-        "system_prompt": "This is a system prompt",
-    }
-
-    with requests_mock.Mocker() as mock:
-        mock.post(
-            "http://nearest:8108/conversations/models",
-            json=json_response,
-        )
-
-        fake_conversations_models.create(
-            model={
-                "api_key": "abc",
-                "id": "1",
-                "max_bytes": 1000000,
-                "model_name": "openAI-gpt-3",
-                "system_prompt": "This is a system prompt",
-            },
-        )
-
-        assert mock.call_count == 1
-        assert mock.called is True
-        assert mock.last_request.method == "POST"
-        assert mock.last_request.url == "http://nearest:8108/conversations/models"
-        assert mock.last_request.json() == json_response
 
 
 @pytest.mark.open_ai

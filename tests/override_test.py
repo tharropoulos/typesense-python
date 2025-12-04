@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-import requests_mock
 
 from tests.utils.object_assertions import (
     assert_match_object,
@@ -50,55 +49,6 @@ def test_init(fake_api_call: ApiCall) -> None:
         override._endpoint_path()  # noqa: WPS437
         == "/collections/companies/overrides/company_override"
     )
-
-
-def test_retrieve(fake_override: Override) -> None:
-    """Test that the Override object can retrieve an override."""
-    json_response: OverrideSchema = {
-        "rule": {
-            "match": "contains",
-            "query": "companies",
-        },
-        "filter_by": "num_employees>10",
-    }
-
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "/collections/companies/overrides/company_override",
-            json=json_response,
-        )
-
-        response = fake_override.retrieve()
-
-        assert len(mock.request_history) == 1
-        assert mock.request_history[0].method == "GET"
-        assert (
-            mock.request_history[0].url
-            == "http://nearest:8108/collections/companies/overrides/company_override"
-        )
-        assert response == json_response
-
-
-def test_delete(fake_override: Override) -> None:
-    """Test that the Override object can delete an override."""
-    json_response: OverrideDeleteSchema = {
-        "id": "company_override",
-    }
-    with requests_mock.Mocker() as mock:
-        mock.delete(
-            "/collections/companies/overrides/company_override",
-            json=json_response,
-        )
-
-        response = fake_override.delete()
-
-        assert len(mock.request_history) == 1
-        assert mock.request_history[0].method == "DELETE"
-        assert (
-            mock.request_history[0].url
-            == "http://nearest:8108/collections/companies/overrides/company_override"
-        )
-        assert response == {"id": "company_override"}
 
 
 def test_actual_retrieve(

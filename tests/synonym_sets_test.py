@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-import requests_mock
 
 from tests.utils.object_assertions import (
     assert_match_object,
@@ -14,10 +13,6 @@ from tests.utils.version import is_v30_or_above
 from typesense.api_call import ApiCall
 from typesense.client import Client
 from typesense.synonym_sets import SynonymSets
-from typesense.types.synonym_set import (
-    SynonymSetCreateSchema,
-    SynonymSetSchema,
-)
 
 pytestmark = pytest.mark.skipif(
     not is_v30_or_above(
@@ -45,69 +40,6 @@ def test_init(fake_api_call: ApiCall) -> None:
         synsets.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,
     )
-
-
-def test_retrieve(fake_synonym_sets: SynonymSets) -> None:
-    """Test that the SynonymSets object can retrieve synonym sets."""
-    json_response = [
-        {
-            "name": "test-set",
-            "items": [
-                {
-                    "id": "company_synonym",
-                    "root": "",
-                    "synonyms": ["companies", "corporations", "firms"],
-                }
-            ],
-        }
-    ]
-
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "http://nearest:8108/synonym_sets",
-            json=json_response,
-        )
-
-        response = fake_synonym_sets.retrieve()
-
-        assert isinstance(response, list)
-        assert len(response) == 1
-        assert response == json_response
-
-
-def test_create(fake_synonym_sets: SynonymSets) -> None:
-    """Test that the SynonymSets object can create a synonym set."""
-    json_response: SynonymSetSchema = {
-        "name": "test-set",
-        "items": [
-            {
-                "id": "company_synonym",
-                "synonyms": ["companies", "corporations", "firms"],
-            }
-        ],
-    }
-
-    with requests_mock.Mocker() as mock:
-        mock.put(
-            "http://nearest:8108/synonym_sets/test-set",
-            json=json_response,
-        )
-
-        payload: SynonymSetCreateSchema = {
-            "items": [
-                {
-                    "id": "company_synonym",
-                    "synonyms": ["companies", "corporations", "firms"],
-                }
-            ]
-        }
-        fake_synonym_sets["test-set"].upsert(payload)
-
-        assert mock.call_count == 1
-        assert mock.called is True
-        assert mock.last_request.method == "PUT"
-        assert mock.last_request.url == "http://nearest:8108/synonym_sets/test-set"
-        assert mock.last_request.json() == payload
 
 
 def test_actual_create(

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-import requests_mock
 
 from tests.utils.version import is_v30_or_above
 from typesense.client import Client
@@ -48,18 +47,6 @@ def test_actual_create_event(
     resp = actual_client.analytics.events.create(event)
     assert resp["ok"] is True
     actual_client.analytics.rules["company_analytics_rule"].delete()
-
-
-def test_create_event(fake_client: Client) -> None:
-    event: AnalyticsEvent = {
-        "name": "company_analytics_rule",
-        "event_type": "query",
-        "data": {"user_id": "user-1", "q": "apple"},
-    }
-    with requests_mock.Mocker() as mock:
-        mock.post("http://nearest:8108/analytics/events", json={"ok": True})
-        resp = fake_client.analytics.events.create(event)
-        assert resp["ok"] is True
 
 
 def test_status(actual_client: Client, delete_all: None) -> None:
@@ -140,10 +127,3 @@ def test_acutal_retrieve_events(
 def test_acutal_flush(actual_client: Client, delete_all: None) -> None:
     resp = actual_client.analytics.events.flush()
     assert resp["ok"] in [True, False]
-
-
-def test_flush(fake_client: Client) -> None:
-    with requests_mock.Mocker() as mock:
-        mock.post("http://nearest:8108/analytics/flush", json={"ok": True})
-        resp = fake_client.analytics.events.flush()
-        assert resp["ok"] is True

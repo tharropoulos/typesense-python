@@ -1,9 +1,6 @@
 """Tests for the Aliases class."""
 
 from __future__ import annotations
-
-import requests_mock
-
 from tests.utils.object_assertions import (
     assert_match_object,
     assert_object_lists_match,
@@ -11,7 +8,6 @@ from tests.utils.object_assertions import (
 )
 from typesense.aliases import Aliases
 from typesense.api_call import ApiCall
-from typesense.types.alias import AliasesResponseSchema, AliasSchema
 
 
 def test_init(fake_api_call: ApiCall) -> None:
@@ -55,58 +51,6 @@ def test_get_existing_alias(fake_aliases: Aliases) -> None:
     assert len(fake_aliases.aliases) == 1
 
     assert alias is fetched_alias
-
-
-def test_retrieve(fake_aliases: Aliases) -> None:
-    """Test that the Aliases object can retrieve aliases."""
-    json_response: AliasesResponseSchema = {
-        "aliases": [
-            {
-                "collection_name": "companies",
-                "name": "company_alias",
-            },
-        ],
-    }
-
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "http://nearest:8108/aliases",
-            json=json_response,
-        )
-
-        response = fake_aliases.retrieve()
-
-        assert len(response) == 1
-        assert response["aliases"][0] == {
-            "collection_name": "companies",
-            "name": "company_alias",
-        }
-        assert response == json_response
-
-
-def test_create(fake_aliases: Aliases) -> None:
-    """Test that the Aliases object can create a alias."""
-    json_response: AliasSchema = {
-        "collection_name": "companies",
-        "name": "company_alias",
-    }
-
-    with requests_mock.Mocker() as mock:
-        mock.put(
-            "http://nearest:8108/aliases/company_alias",
-            json=json_response,
-        )
-
-        fake_aliases.upsert(
-            "company_alias",
-            {"collection_name": "companies", "name": "company_alias"},
-        )
-
-        assert mock.call_count == 1
-        assert mock.called is True
-        assert mock.last_request.method == "PUT"
-        assert mock.last_request.url == "http://nearest:8108/aliases/company_alias"
-        assert mock.last_request.json() == json_response
 
 
 def test_actual_create(actual_aliases: Aliases, delete_all_aliases: None) -> None:

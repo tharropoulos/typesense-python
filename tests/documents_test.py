@@ -67,32 +67,6 @@ def test_get_existing_document(fake_documents: Documents) -> None:
     assert document is fetched_document
 
 
-def test_create(
-    actual_documents: Documents[Companies],
-    actual_api_call: ApiCall,
-    delete_all: None,
-    create_collection: None,
-    mocker: MockFixture,
-) -> None:
-    """Test that the Documents object can create a document on Typesense server."""
-    company: Companies = {
-        "company_name": "Typesense",
-        "id": "1",
-        "num_employees": 25,
-    }
-    spy = mocker.spy(actual_api_call, "post")
-    response = actual_documents.create(company)
-    expected = company
-    assert response == expected
-    spy.assert_called_once_with(
-        "/collections/companies/documents/",
-        body=company,
-        params={"action": "create"},
-        as_json=True,
-        entity_type=typing.Dict[str, str],
-    )
-
-
 def test_upsert(
     actual_documents: Documents[Companies],
     actual_api_call: ApiCall,

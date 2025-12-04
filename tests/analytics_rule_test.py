@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-import requests_mock
 
 from tests.utils.version import is_v30_or_above
 from typesense.client import Client
@@ -22,30 +21,6 @@ pytestmark = pytest.mark.skipif(
     ),
     reason="Run analytics tests only on v30+",
 )
-
-
-def test_rule_retrieve(fake_api_call) -> None:
-    rule = AnalyticsRule(fake_api_call, "company_analytics_rule")
-    expected = {"name": "company_analytics_rule"}
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "http://nearest:8108/analytics/rules/company_analytics_rule",
-            json=expected,
-        )
-        resp = rule.retrieve()
-        assert resp == expected
-
-
-def test_rule_delete(fake_api_call) -> None:
-    rule = AnalyticsRule(fake_api_call, "company_analytics_rule")
-    expected = {"name": "company_analytics_rule"}
-    with requests_mock.Mocker() as mock:
-        mock.delete(
-            "http://nearest:8108/analytics/rules/company_analytics_rule",
-            json=expected,
-        )
-        resp = rule.delete()
-        assert resp == expected
 
 
 def test_actual_rule_retrieve(

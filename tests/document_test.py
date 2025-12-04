@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import pytest
-import requests_mock
 
-from tests.fixtures.document_fixtures import Companies
 from tests.utils.object_assertions import (
     assert_match_object,
     assert_object_lists_match,
@@ -35,55 +33,6 @@ def test_init(fake_api_call: ApiCall) -> None:
     assert (
         document._endpoint_path == "/collections/companies/documents/0"  # noqa: WPS437
     )
-
-
-def test_retrieve(fake_document: Document) -> None:
-    """Test that the Document object can retrieve an document."""
-    json_response: Companies = {
-        "company_name": "Company",
-        "id": "0",
-        "num_employees": 10,
-    }
-
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "http://nearest:8108/collections/companies/documents/0",
-            json=json_response,
-        )
-
-        response = fake_document.retrieve()
-
-        assert len(mock.request_history) == 1
-        assert mock.request_history[0].method == "GET"
-        assert (
-            mock.request_history[0].url
-            == "http://nearest:8108/collections/companies/documents/0"
-        )
-        assert response == json_response
-
-
-def test_delete(fake_document: Document) -> None:
-    """Test that the Document object can delete an document."""
-    json_response: Companies = {
-        "company_name": "Company",
-        "id": "0",
-        "num_employees": 10,
-    }
-    with requests_mock.Mocker() as mock:
-        mock.delete(
-            "http://nearest:8108/collections/companies/documents/0",
-            json=json_response,
-        )
-
-        response = fake_document.delete()
-
-        assert len(mock.request_history) == 1
-        assert mock.request_history[0].method == "DELETE"
-        assert (
-            mock.request_history[0].url
-            == "http://nearest:8108/collections/companies/documents/0"
-        )
-        assert response == json_response
 
 
 def test_actual_update(

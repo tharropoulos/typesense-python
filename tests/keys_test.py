@@ -6,9 +6,7 @@ import base64
 import hashlib
 import hmac
 import json
-import time
 
-import requests_mock
 
 from tests.utils.object_assertions import (
     assert_match_object,
@@ -17,7 +15,6 @@ from tests.utils.object_assertions import (
 )
 from typesense.api_call import ApiCall
 from typesense.keys import Keys
-from typesense.types.key import ApiKeyRetrieveSchema
 
 
 def test_init(fake_api_call: ApiCall) -> None:
@@ -60,72 +57,6 @@ def test_get_existing_key(fake_keys: Keys) -> None:
     assert len(fake_keys.keys) == 1
 
     assert key is fetched_key
-
-
-def test_retrieve(fake_keys: Keys) -> None:
-    """Test that the Keys object can retrieve keys."""
-    json_response: ApiKeyRetrieveSchema = {
-        "keys": [
-            {
-                "actions": ["documents:search"],
-                "collections": ["companies"],
-                "description": "Search-only key",
-                "expires_at": int(time.time()) + 3600,
-                "id": 1,
-                "value_prefix": "asdf",
-            },
-        ],
-    }
-
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "http://nearest:8108/keys",
-            json=json_response,
-        )
-
-        response = fake_keys.retrieve()
-
-        assert len(response) == 1
-        assert response["keys"][0] == json_response.get("keys")[0]
-        assert response == json_response
-
-
-def test_create(fake_keys: Keys) -> None:
-    """Test that the Keys object can create a key."""
-    json_response: ApiKeyRetrieveSchema = {
-        "keys": [
-            {
-                "actions": ["documents:search"],
-                "collections": ["companies"],
-                "description": "Search-only key",
-                "expires_at": int(time.time()) + 3600,
-                "id": 1,
-                "value_prefix": "asdf",
-            },
-        ],
-    }
-
-    with requests_mock.Mocker() as mock:
-        mock.post(
-            "http://nearest:8108/keys",
-            json=json_response,
-        )
-
-        fake_keys.create(
-            schema={
-                "actions": ["documents:search"],
-                "collections": ["companies"],
-            },
-        )
-
-        assert mock.call_count == 1
-        assert mock.called is True
-        assert mock.last_request.method == "POST"
-        assert mock.last_request.url == "http://nearest:8108/keys"
-        assert mock.last_request.json() == {
-            "actions": ["documents:search"],
-            "collections": ["companies"],
-        }
 
 
 def test_actual_create(

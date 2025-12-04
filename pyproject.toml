@@ -42,7 +42,6 @@ dev = [
     "pytest",
     "coverage",
     "pytest-mock",
-    "requests-mock",
     "python-dotenv",
     "types-requests",
     "faker",

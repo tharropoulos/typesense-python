@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import requests_mock
 
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
 from typesense.api_call import ApiCall
@@ -26,52 +25,6 @@ def test_init(fake_api_call: ApiCall) -> None:
         fake_api_call.config.nearest_node,
     )
     assert stopword_set._endpoint_path == "/stopwords/company_stopwords"  # noqa: WPS437
-
-
-def test_retrieve(fake_stopwords_set: StopwordsSet) -> None:
-    """Test that the StopwordsSet object can retrieve an stopword_set."""
-    json_response: StopwordSchema = {
-        "id": "company_stopwords",
-        "stopwords": ["a", "an", "the"],
-    }
-
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "/stopwords/company_stopwords",
-            json=json_response,
-        )
-
-        response = fake_stopwords_set.retrieve()
-
-        assert len(mock.request_history) == 1
-        assert mock.request_history[0].method == "GET"
-        assert (
-            mock.request_history[0].url
-            == "http://nearest:8108/stopwords/company_stopwords"
-        )
-        assert response == json_response
-
-
-def test_delete(fake_stopwords_set: StopwordsSet) -> None:
-    """Test that the StopwordsSet object can delete an stopword_set."""
-    json_response: StopwordDeleteSchema = {
-        "id": "company_stopwords",
-    }
-    with requests_mock.Mocker() as mock:
-        mock.delete(
-            "/stopwords/company_stopwords",
-            json=json_response,
-        )
-
-        response = fake_stopwords_set.delete()
-
-        assert len(mock.request_history) == 1
-        assert mock.request_history[0].method == "DELETE"
-        assert (
-            mock.request_history[0].url
-            == "http://nearest:8108/stopwords/company_stopwords"
-        )
-        assert response == json_response
 
 
 def test_actual_retrieve(
