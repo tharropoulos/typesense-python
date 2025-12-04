@@ -73,3 +73,112 @@ def test_actual_delete(
 
     print(response)
     assert response == {"name": "products"}
+
+
+def test_actual_list_items(
+    actual_curation_sets: CurationSets,
+    delete_all_curation_sets: None,
+    create_curation_set: None,
+) -> None:
+    """Test that the CurationSet object can list items from Typesense Server."""
+    response = actual_curation_sets["products"].list_items()
+
+    assert response == [
+        {
+            "excludes": [
+                {
+                    "id": "999",
+                },
+            ],
+            "filter_curated_hits": False,
+            "id": "rule-1",
+            "includes": [
+                {
+                    "id": "123",
+                    "position": 1,
+                },
+            ],
+            "remove_matched_tokens": False,
+            "rule": {
+                "match": "contains",
+                "query": "shoe",
+            },
+            "stop_processing": True,
+        },
+    ]
+
+
+def test_actual_get_item(
+    actual_curation_sets: CurationSets,
+    delete_all_curation_sets: None,
+    create_curation_set: None,
+) -> None:
+    """Test that the CurationSet object can get a specific item from Typesense Server."""
+    response = actual_curation_sets["products"].get_item("rule-1")
+
+    assert response == {
+        "excludes": [
+            {
+                "id": "999",
+            },
+        ],
+        "filter_curated_hits": False,
+        "id": "rule-1",
+        "includes": [
+            {
+                "id": "123",
+                "position": 1,
+            },
+        ],
+        "remove_matched_tokens": False,
+        "rule": {
+            "match": "contains",
+            "query": "shoe",
+        },
+        "stop_processing": True,
+    }
+
+
+def test_actual_upsert_item(
+    actual_curation_sets: CurationSets,
+    delete_all_curation_sets: None,
+    create_curation_set: None,
+) -> None:
+    """Test that the CurationSet object can upsert an item in Typesense Server."""
+    payload: CurationItemSchema = {
+        "id": "rule-2",
+        "rule": {"query": "boot", "match": "exact"},
+        "includes": [{"id": "456", "position": 2}],
+        "excludes": [{"id": "888"}],
+    }
+    response = actual_curation_sets["products"].upsert_item("rule-2", payload)
+
+    assert response == {
+        "excludes": [
+            {
+                "id": "888",
+            },
+        ],
+        "id": "rule-2",
+        "includes": [
+            {
+                "id": "456",
+                "position": 2,
+            },
+        ],
+        "rule": {
+            "match": "exact",
+            "query": "boot",
+        },
+    }
+
+
+def test_actual_delete_item(
+    actual_curation_sets: CurationSets,
+    delete_all_curation_sets: None,
+    create_curation_set: None,
+) -> None:
+    """Test that the CurationSet object can delete an item from Typesense Server."""
+    response = actual_curation_sets["products"].delete_item("rule-1")
+
+    assert response == {"id": "rule-1"}
