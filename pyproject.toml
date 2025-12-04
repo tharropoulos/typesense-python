@@ -21,7 +21,10 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
-dependencies = ["requests", "typing-extensions"]
+dependencies = [
+    "httpx>=0.28.1",
+    "typing-extensions",
+]
 dynamic = ["version"]
 
 [project.urls]
