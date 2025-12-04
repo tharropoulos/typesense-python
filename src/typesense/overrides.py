@@ -25,8 +25,6 @@ This module uses type hinting and is compatible with Python 3.11+ as well as ear
 versions through the use of the typing_extensions library.
 """
 
-from __future__ import annotations
-
 import sys
 
 from typing_extensions import deprecated
@@ -63,7 +61,7 @@ class Overrides:
 
     resource_path: typing.Final[str] = "overrides"
 
-    @warn_deprecation(  # type: ignore[misc]
+    @warn_deprecation(  # type: ignore[untyped-decorator]
         "Overrides is deprecated on v30+. Use client.curation_sets instead.",
         flag_name="overrides_deprecation",
     )

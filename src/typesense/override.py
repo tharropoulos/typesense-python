@@ -42,7 +42,7 @@ class Override:
         override_id (str): The ID of the override.
     """
 
-    @warn_deprecation(  # type: ignore[misc]
+    @warn_deprecation(  # type: ignore[untyped-decorator]
         "The override API (collections/{collection}/overrides/{override_id}) is deprecated is removed on v30+. "
         "Use curation sets (curation_sets) instead.",
         flag_name="overrides_deprecation",

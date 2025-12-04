@@ -35,7 +35,7 @@ build-backend = "setuptools.build_meta"
 
 [dependency-groups]
 dev = [
-    "mypy",
+    "mypy>=1.19.0",
     "pytest",
     "coverage",
     "pytest-mock",

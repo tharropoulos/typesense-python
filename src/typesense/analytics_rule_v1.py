@@ -53,7 +53,7 @@ class AnalyticsRuleV1:
         rule_id (str): The ID of the analytics rule.
     """
 
-    @warn_deprecation(  # type: ignore[misc]
+    @warn_deprecation(  # type: ignore[untyped-decorator]
         "AnalyticsRuleV1 is deprecated on v30+. Use client.analytics.rules[rule_id] instead.",
         flag_name="analytics_rules_v1_deprecation",
     )

@@ -61,7 +61,7 @@ class Synonyms:
 
     resource_path: typing.Final[str] = "synonyms"
 
-    @warn_deprecation(  # type: ignore[misc]
+    @warn_deprecation(  # type: ignore[untyped-decorator]
         "The synonyms API (collections/{collection}/synonyms) is deprecated is removed on v30+. "
         "Use synonym sets (synonym_sets) instead.",
         flag_name="synonyms_deprecation",
