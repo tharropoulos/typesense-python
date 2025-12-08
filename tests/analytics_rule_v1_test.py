@@ -10,6 +10,7 @@ from typesense.client import Client
 from typesense.analytics_rule_v1 import AnalyticsRuleV1
 from typesense.analytics_rules_v1 import AnalyticsRulesV1
 from typesense.api_call import ApiCall
+from typesense.async_analytics_rules_v1 import AsyncAnalyticsRulesV1
 from typesense.types.analytics_rule_v1 import RuleDeleteSchema, RuleSchemaForQueries
 
 pytestmark = pytest.mark.skipif(
@@ -45,24 +46,14 @@ def test_init(fake_api_call: ApiCall) -> None:
     )
 
 
-        "name": "company_analytics_rule",
-        "params": {
-            "source": {"collections": ["companies"]},
-        },
-        "type": "nohits_queries",
-    }
-
-
-
-
-        "name": "company_analytics_rule",
-    }
-
-
+def test_actual_retrieve(
+    actual_analytics_rules: AnalyticsRulesV1,
     delete_all: None,
     delete_all_analytics_rules_v1: None,
     create_analytics_rule_v1: None,
 ) -> None:
+    """Test that the AnalyticsRuleV1 object can retrieve a rule from Typesense Server."""
+    response = actual_analytics_rules["company_analytics_rule"].retrieve()
 
     expected: RuleSchemaForQueries = {
         "name": "company_analytics_rule",
@@ -77,10 +68,53 @@ def test_init(fake_api_call: ApiCall) -> None:
     assert response == expected
 
 
+def test_actual_delete(
+    actual_analytics_rules: AnalyticsRulesV1,
     delete_all: None,
     delete_all_analytics_rules_v1: None,
     create_analytics_rule_v1: None,
 ) -> None:
+    """Test that the AnalyticsRuleV1 object can delete a rule from Typesense Server."""
+    response = actual_analytics_rules["company_analytics_rule"].delete()
+
+    expected: RuleDeleteSchema = {
+        "name": "company_analytics_rule",
+    }
+    assert response == expected
+
+
+async def test_actual_retrieve_async(
+    actual_async_analytics_rules_v1: AsyncAnalyticsRulesV1,
+    delete_all: None,
+    delete_all_analytics_rules_v1: None,
+    create_analytics_rule_v1: None,
+) -> None:
+    """Test that the AsyncAnalyticsRuleV1 object can retrieve a rule from Typesense Server."""
+    response = await actual_async_analytics_rules_v1[
+        "company_analytics_rule"
+    ].retrieve()
+
+    expected: RuleSchemaForQueries = {
+        "name": "company_analytics_rule",
+        "params": {
+            "destination": {"collection": "companies_queries"},
+            "limit": 1000,
+            "source": {"collections": ["companies"]},
+        },
+        "type": "nohits_queries",
+    }
+
+    assert response == expected
+
+
+async def test_actual_delete_async(
+    actual_async_analytics_rules_v1: AsyncAnalyticsRulesV1,
+    delete_all: None,
+    delete_all_analytics_rules_v1: None,
+    create_analytics_rule_v1: None,
+) -> None:
+    """Test that the AsyncAnalyticsRuleV1 object can delete a rule from Typesense Server."""
+    response = await actual_async_analytics_rules_v1["company_analytics_rule"].delete()
 
     expected: RuleDeleteSchema = {
         "name": "company_analytics_rule",

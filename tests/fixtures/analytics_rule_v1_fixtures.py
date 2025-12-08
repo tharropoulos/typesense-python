@@ -6,6 +6,9 @@ import requests
 from typesense.analytics_rule_v1 import AnalyticsRuleV1
 from typesense.analytics_rules_v1 import AnalyticsRulesV1
 from typesense.api_call import ApiCall
+from typesense.async_api_call import AsyncApiCall
+from typesense.async_analytics_rule_v1 import AsyncAnalyticsRuleV1
+from typesense.async_analytics_rules_v1 import AsyncAnalyticsRulesV1
 
 
 @pytest.fixture(scope="function", name="delete_all_analytics_rules_v1")
@@ -66,3 +69,21 @@ def actual_analytics_rules_v1_fixture(actual_api_call: ApiCall) -> AnalyticsRule
 def fake_analytics_rule_v1_fixture(fake_api_call: ApiCall) -> AnalyticsRuleV1:
     """Return a AnalyticsRule object with test values."""
     return AnalyticsRuleV1(fake_api_call, "company_analytics_rule")
+
+
+@pytest.fixture(scope="function", name="fake_async_analytics_rules_v1")
+def fake_async_analytics_rules_v1_fixture(fake_async_api_call: AsyncApiCall) -> AsyncAnalyticsRulesV1:
+    """Return a AsyncAnalyticsRulesV1 object with test values."""
+    return AsyncAnalyticsRulesV1(fake_async_api_call)
+
+
+@pytest.fixture(scope="function", name="actual_async_analytics_rules_v1")
+def actual_async_analytics_rules_v1_fixture(actual_async_api_call: AsyncApiCall) -> AsyncAnalyticsRulesV1:
+    """Return a AsyncAnalyticsRulesV1 object using a real API."""
+    return AsyncAnalyticsRulesV1(actual_async_api_call)
+
+
+@pytest.fixture(scope="function", name="fake_async_analytics_rule_v1")
+def fake_async_analytics_rule_v1_fixture(fake_async_api_call: AsyncApiCall) -> AsyncAnalyticsRuleV1:
+    """Return a AsyncAnalyticsRuleV1 object with test values."""
+    return AsyncAnalyticsRuleV1(fake_async_api_call, "company_analytics_rule")
