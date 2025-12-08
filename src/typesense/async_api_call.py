@@ -1,56 +1,61 @@
 """
-This module provides functionality for making API calls to a Typesense server.
+This module provides async functionality for making API calls to a Typesense server.
 
-It contains the ApiCall class, which is responsible for executing HTTP requests
+It contains the AsyncApiCall class, which is responsible for executing async HTTP requests
 to the Typesense API, handling retries, and managing node health.
 
 Key features:
-- Support for GET, POST, PUT, PATCH, and DELETE HTTP methods
+- Support for GET, POST, PUT, PATCH, and DELETE HTTP methods (async)
 - Automatic retries on server errors
 - Node health management
 - Type-safe request execution with overloaded methods
 
 Classes:
-    ApiCall: Manages API calls to the Typesense server.
+    AsyncApiCall: Manages async API calls to the Typesense server.
 
 Dependencies:
-    - requests: For making HTTP requests
+    - httpx: For making async HTTP requests
     - typesense.configuration: Provides Configuration and Node classes
     - typesense.exceptions: Custom exception classes
     - typesense.node_manager: Provides NodeManager class
-    - typesense.request_handler: Provides RequestHandler class
 
 Usage:
     from typesense.configuration import Configuration
-    from api_call import ApiCall
+    from typesense.async_api_call import AsyncApiCall
 
     config = Configuration(...)
-    api_call = ApiCall(config)
-    response = api_call.get("/collections", SomeEntityType)
+    api_call = AsyncApiCall(config)
+    response = await api_call.get("/collections", SomeEntityType)
 
 Note: This module is part of the Typesense Python client library and is used internally
 by other components of the library.
 """
 
 import sys
+from types import MappingProxyType, TracebackType
 
 import httpx
 
-if sys.version_info >= (3, 11):
-    import typing
-else:
-    import typing_extensions as typing
 from typesense.configuration import Configuration, Node
 from typesense.exceptions import (
     HTTPStatus0Error,
+    ObjectAlreadyExists,
+    ObjectNotFound,
+    ObjectUnprocessable,
+    RequestForbidden,
+    RequestMalformed,
+    RequestUnauthorized,
     ServerError,
     ServiceUnavailable,
     TypesenseClientError,
 )
 from typesense.node_manager import NodeManager
-from typesense.request_handler import (
-    RequestHandler,
-)
+from typesense.request_handler import RequestHandler
+
+if sys.version_info >= (3, 11):
+    import typing
+else:
+    import typing_extensions as typing
 
 TEntityDict = typing.TypeVar("TEntityDict")
 TParams = typing.TypeVar("TParams", bound=typing.Dict[str, typing.Any])
@@ -87,83 +92,27 @@ class SessionFunctionKwargs(typing.Generic[TParams, TBody], typing.TypedDict):
     """
 
     params: typing.NotRequired[typing.Union[TParams, None]]
-    data: typing.NotRequired[
-        typing.Union[TBody, str, typing.Dict[str, typing.Any], None]
-    ]
+    data: typing.NotRequired[typing.Union[TBody, None]]
     content: typing.NotRequired[typing.Union[TBody, str, None]]
     headers: typing.NotRequired[typing.Dict[str, str]]
     timeout: typing.NotRequired[float]
 
 
-if sys.version_info >= (3, 11):
-    import typing
-else:
-    import typing_extensions as typing
-
-
-class ApiCallProtocol(typing.Protocol):
-    """
-    Protocol defining the interface for API call classes.
-
-    This protocol ensures that both sync (ApiCall) and async (AsyncApiCall)
-    implementations provide the same interface, allowing resource classes
-    to work with either implementation.
-    """
-
-    config: Configuration
-    node_manager: NodeManager
-    request_handler: RequestHandler
-
-    def get(
-        self,
-        endpoint: str,
-        entity_type: typing.Type[TEntityDict],
-        as_json: typing.Union[typing.Literal[True], typing.Literal[False]] = True,
-        params: typing.Union[TParams, None] = None,
-    ) -> typing.Union[TEntityDict, str]:
-        """Execute a GET request to the Typesense API."""
-        ...
-
-    def post(
-        self,
-        endpoint: str,
-        entity_type: typing.Type[TEntityDict],
-        as_json: typing.Union[typing.Literal[True], typing.Literal[False]] = True,
-        params: typing.Union[TParams, None] = None,
-        body: typing.Union[TBody, None] = None,
-    ) -> typing.Union[str, TEntityDict]:
-        """Execute a POST request to the Typesense API."""
-        ...
-
-    def put(
-        self,
-        endpoint: str,
-        entity_type: typing.Type[TEntityDict],
-        body: TBody,
-        params: typing.Union[TParams, None] = None,
-    ) -> TEntityDict:
-        """Execute a PUT request to the Typesense API."""
-        ...
-
-    def patch(
-        self,
-        endpoint: str,
-        entity_type: typing.Type[TEntityDict],
-        body: TBody,
-        params: typing.Union[TParams, None] = None,
-    ) -> TEntityDict:
-        """Execute a PATCH request to the Typesense API."""
-        ...
-
-    def delete(
-        self,
-        endpoint: str,
-        entity_type: typing.Type[TEntityDict],
-        params: typing.Union[TParams, None] = None,
-    ) -> TEntityDict:
-        """Execute a DELETE request to the Typesense API."""
-        ...
-
+_ERROR_CODE_MAP: typing.Final[
+    typing.Mapping[str, typing.Type[TypesenseClientError]]
+] = MappingProxyType(
+    {
+        "0": HTTPStatus0Error,
+        "400": RequestMalformed,
+        "401": RequestUnauthorized,
+        "403": RequestForbidden,
+        "404": ObjectNotFound,
+        "409": ObjectAlreadyExists,
+        "422": ObjectUnprocessable,
+        "500": ServerError,
+        "503": ServiceUnavailable,
+    },
+)
 
 _SERVER_ERRORS: typing.Final[
     typing.Tuple[
@@ -186,22 +135,22 @@ _SERVER_ERRORS: typing.Final[
 )
 
 
-class ApiCall:
+class AsyncApiCall:
     """
-    Manages API calls to the Typesense server.
+    Manages async API calls to the Typesense server.
 
-    This class handles the execution of HTTP requests to the Typesense API,
+    This class handles the execution of async HTTP requests to the Typesense API,
     including retries, node health management, and error handling.
 
     Attributes:
         config (Configuration): The configuration object for the Typesense client.
         node_manager (NodeManager): Manages the nodes in the Typesense cluster.
-        request_handler (RequestHandler): Handles the execution of individual requests.
+        _client (httpx.AsyncClient): The httpx async client for making requests.
     """
 
     def __init__(self, config: Configuration):
         """
-        Initialize the ApiCall instance.
+        Initialize the AsyncApiCall instance.
 
         Args:
             config (Configuration): The configuration object for the Typesense client.
@@ -209,13 +158,29 @@ class ApiCall:
         self.config = config
         self.node_manager = NodeManager(config)
         self.request_handler = RequestHandler(config)
-        self._client = httpx.Client(
+        self._client = httpx.AsyncClient(
             timeout=config.connection_timeout_seconds,
-            verify=config.verify,
         )
 
+    async def __aenter__(self) -> "AsyncApiCall":
+        """Async context manager entry."""
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: typing.Optional[typing.Type[BaseException]],
+        exc_val: typing.Optional[BaseException],
+        exc_tb: typing.Optional[TracebackType],
+    ) -> None:
+        """Async context manager exit."""
+        await self._client.aclose()
+
+    async def aclose(self) -> None:
+        """Close the httpx client."""
+        await self._client.aclose()
+
     @typing.overload
-    def get(
+    async def get(
         self,
         endpoint: str,
         entity_type: typing.Type[TEntityDict],
@@ -223,7 +188,7 @@ class ApiCall:
         params: typing.Union[TParams, None] = None,
     ) -> str:
         """
-        Execute a GET request to the Typesense API.
+        Execute an async GET request to the Typesense API.
 
         Args:
             endpoint (str): The API endpoint to call.
@@ -236,7 +201,7 @@ class ApiCall:
         """
 
     @typing.overload
-    def get(
+    async def get(
         self,
         endpoint: str,
         entity_type: typing.Type[TEntityDict],
@@ -244,7 +209,7 @@ class ApiCall:
         params: typing.Union[TParams, None] = None,
     ) -> TEntityDict:
         """
-        Execute a GET request to the Typesense API.
+        Execute an async GET request to the Typesense API.
 
         Args:
             endpoint (str): The API endpoint to call.
@@ -256,7 +221,7 @@ class ApiCall:
             EntityDict: The response, as a JSON object.
         """
 
-    def get(
+    async def get(
         self,
         endpoint: str,
         entity_type: typing.Type[TEntityDict],
@@ -264,7 +229,7 @@ class ApiCall:
         params: typing.Union[TParams, None] = None,
     ) -> typing.Union[TEntityDict, str]:
         """
-        Execute a GET request to the Typesense API.
+        Execute an async GET request to the Typesense API.
 
         Args:
             endpoint (str): The API endpoint to call.
@@ -275,7 +240,7 @@ class ApiCall:
         Returns:
             Union[TEntityDict, str]: The response, either as a JSON object or a string.
         """
-        return self._execute_request(
+        return await self._execute_request(
             "GET",
             endpoint,
             entity_type,
@@ -284,7 +249,7 @@ class ApiCall:
         )
 
     @typing.overload
-    def post(
+    async def post(
         self,
         endpoint: str,
         entity_type: typing.Type[TEntityDict],
@@ -293,20 +258,21 @@ class ApiCall:
         body: typing.Union[TBody, None] = None,
     ) -> str:
         """
-        Execute a GET request to the Typesense API.
+        Execute an async POST request to the Typesense API.
 
         Args:
             endpoint (str): The API endpoint to call.
             entity_type (Type[TEntityDict]): The expected type of the response entity.
             as_json (False): Whether to return the response as JSON. Defaults to True.
             params (Union[TParams, None], optional): Query parameters for the request.
+            body (Union[TBody, None], optional): Request body.
 
         Returns:
             str: The response, as a string.
         """
 
     @typing.overload
-    def post(
+    async def post(
         self,
         endpoint: str,
         entity_type: typing.Type[TEntityDict],
@@ -315,19 +281,20 @@ class ApiCall:
         body: typing.Union[TBody, None] = None,
     ) -> TEntityDict:
         """
-        Execute a POST request to the Typesense API.
+        Execute an async POST request to the Typesense API.
 
         Args:
             endpoint (str): The API endpoint to call.
             entity_type (Type[TEntityDict]): The expected type of the response entity.
             as_json (True): Whether to return the response as JSON. Defaults to True.
             params (Union[TParams, None], optional): Query parameters for the request.
+            body (Union[TBody, None], optional): Request body.
 
         Returns:
             EntityDict: The response, as a JSON object.
         """
 
-    def post(
+    async def post(
         self,
         endpoint: str,
         entity_type: typing.Type[TEntityDict],
@@ -336,18 +303,19 @@ class ApiCall:
         body: typing.Union[TBody, None] = None,
     ) -> typing.Union[str, TEntityDict]:
         """
-        Execute a POST request to the Typesense API.
+        Execute an async POST request to the Typesense API.
 
         Args:
             endpoint (str): The API endpoint to call.
             entity_type (Type[TEntityDict]): The expected type of the response entity.
             as_json (bool): Whether to return the response as JSON. Defaults to True.
             params (Union[TParams, None], optional): Query parameters for the request.
+            body (Union[TBody, None], optional): Request body.
 
         Returns:
             Union[TEntityDict, str]: The response, either as a JSON object or a string.
         """
-        return self._execute_request(
+        return await self._execute_request(
             "POST",
             endpoint,
             entity_type,
@@ -356,7 +324,7 @@ class ApiCall:
             data=body,
         )
 
-    def put(
+    async def put(
         self,
         endpoint: str,
         entity_type: typing.Type[TEntityDict],
@@ -364,17 +332,18 @@ class ApiCall:
         params: typing.Union[TParams, None] = None,
     ) -> TEntityDict:
         """
-        Execute a PUT request to the Typesense API.
+        Execute an async PUT request to the Typesense API.
 
         Args:
             endpoint (str): The API endpoint to call.
             entity_type (Type[TEntityDict]): The expected type of the response entity.
             params (Union[TParams, None], optional): Query parameters for the request.
+            body (TBody): Request body.
 
         Returns:
             EntityDict: The response, as a JSON object.
         """
-        return self._execute_request(
+        return await self._execute_request(
             "PUT",
             endpoint,
             entity_type,
@@ -383,7 +352,7 @@ class ApiCall:
             data=body,
         )
 
-    def patch(
+    async def patch(
         self,
         endpoint: str,
         entity_type: typing.Type[TEntityDict],
@@ -391,17 +360,18 @@ class ApiCall:
         params: typing.Union[TParams, None] = None,
     ) -> TEntityDict:
         """
-        Execute a PATCH request to the Typesense API.
+        Execute an async PATCH request to the Typesense API.
 
         Args:
             endpoint (str): The API endpoint to call.
             entity_type (Type[TEntityDict]): The expected type of the response entity.
             params (Union[TParams, None], optional): Query parameters for the request.
+            body (TBody): Request body.
 
         Returns:
             EntityDict: The response, as a JSON object.
         """
-        return self._execute_request(
+        return await self._execute_request(
             "PATCH",
             endpoint,
             entity_type,
@@ -410,14 +380,14 @@ class ApiCall:
             data=body,
         )
 
-    def delete(
+    async def delete(
         self,
         endpoint: str,
         entity_type: typing.Type[TEntityDict],
         params: typing.Union[TParams, None] = None,
     ) -> TEntityDict:
         """
-        Execute a DELETE request to the Typesense API.
+        Execute an async DELETE request to the Typesense API.
 
         Args:
             endpoint (str): The API endpoint to call.
@@ -427,7 +397,7 @@ class ApiCall:
         Returns:
             EntityDict: The response, as a JSON object.
         """
-        return self._execute_request(
+        return await self._execute_request(
             "DELETE",
             endpoint,
             entity_type,
@@ -436,7 +406,7 @@ class ApiCall:
         )
 
     @typing.overload
-    def _execute_request(
+    async def _execute_request(
         self,
         method: str,
         endpoint: str,
@@ -446,36 +416,10 @@ class ApiCall:
         num_retries: int = 0,
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> TEntityDict:
-        """
-        Execute a request to the Typesense API with retry logic.
-
-        This method handles the actual execution of the request, including
-        node selection, error handling, and retries.
-
-        Args:
-            fn (Callable): The HTTP method function to use (e.g., session.get).
-
-            endpoint (str): The API endpoint to call.
-
-            entity_type (Type[TEntityDict]): The expected type of the response entity.
-
-            as_json (bool): Whether to return the response as JSON. Defaults to True.
-
-            last_exception (Union[None, Exception], optional): The last exception encountered.
-
-            num_retries (int): The current number of retries attempted.
-
-            kwargs: Additional keyword arguments for the request.
-
-        Returns:
-            TEntityDict: The response, as a JSON object.
-
-        Raises:
-            TypesenseClientError: If all nodes are unhealthy or max retries are exceeded.
-        """
+        """Execute an async request with retry logic."""
 
     @typing.overload
-    def _execute_request(
+    async def _execute_request(
         self,
         method: str,
         endpoint: str,
@@ -485,35 +429,9 @@ class ApiCall:
         num_retries: int = 0,
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> str:
-        """
-        Execute a request to the Typesense API with retry logic.
+        """Execute an async request with retry logic."""
 
-        This method handles the actual execution of the request, including
-        node selection, error handling, and retries.
-
-        Args:
-            fn (Callable): The HTTP method function to use (e.g., session.get).
-
-            endpoint (str): The API endpoint to call.
-
-            entity_type (Type[TEntityDict]): The expected type of the response entity.
-
-            as_json (bool): Whether to return the response as JSON. Defaults to True.
-
-            last_exception (Union[None, Exception], optional): The last exception encountered.
-
-            num_retries (int): The current number of retries attempted.
-
-            kwargs: Additional keyword arguments for the request.
-
-        Returns:
-            str: The response, as a string.
-
-        Raises:
-            TypesenseClientError: If all nodes are unhealthy or max retries are exceeded.
-        """
-
-    def _execute_request(
+    async def _execute_request(
         self,
         method: str,
         endpoint: str,
@@ -524,24 +442,18 @@ class ApiCall:
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> typing.Union[TEntityDict, str]:
         """
-        Execute a request to the Typesense API with retry logic.
+        Execute an async request to the Typesense API with retry logic.
 
         This method handles the actual execution of the request, including
         node selection, error handling, and retries.
 
         Args:
-            method (str): The HTTP method to use (e.g., "GET", "POST").
-
+            method (str): The HTTP method to use (GET, POST, PUT, PATCH, DELETE).
             endpoint (str): The API endpoint to call.
-
             entity_type (Type[TEntityDict]): The expected type of the response entity.
-
             as_json (bool): Whether to return the response as JSON. Defaults to True.
-
             last_exception (Union[None, Exception], optional): The last exception encountered.
-
             num_retries (int): The current number of retries attempted.
-
             kwargs: Additional keyword arguments for the request.
 
         Returns:
@@ -555,19 +467,19 @@ class ApiCall:
                 raise last_exception
             raise TypesenseClientError("All nodes are unhealthy")
 
-        node, url, kwargs = self._prepare_request_params(endpoint, **kwargs)
+        node, url, request_kwargs = self._prepare_request_params(endpoint, **kwargs)
 
         try:
-            return self._make_request_and_process_response(
+            return await self._make_request_and_process_response(
                 method,
                 url,
                 entity_type,
                 as_json,
-                **kwargs,
+                **request_kwargs,
             )
         except _SERVER_ERRORS as server_error:
             self.node_manager.set_node_health(node, is_healthy=False)
-            return self._execute_request(
+            return await self._execute_request(
                 method,
                 endpoint,
                 entity_type,
@@ -577,7 +489,7 @@ class ApiCall:
                 **kwargs,
             )
 
-    def _make_request_and_process_response(
+    async def _make_request_and_process_response(
         self,
         method: str,
         url: str,
@@ -585,8 +497,8 @@ class ApiCall:
         as_json: bool,
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> typing.Union[TEntityDict, str]:
-        """Make the API request and process the response."""
-        request_response = self.request_handler.make_request(
+        """Make the async API request and process the response."""
+        request_response = await self.request_handler.make_request(
             method=method,
             url=url,
             as_json=as_json,
@@ -594,7 +506,10 @@ class ApiCall:
             client=self._client,
             **kwargs,
         )
-        self.node_manager.set_node_health(self.node_manager.get_node(), is_healthy=True)
+        self.node_manager.set_node_health(
+            self.node_manager.get_node(),
+            is_healthy=True,
+        )
         return (
             typing.cast(TEntityDict, request_response)
             if as_json
