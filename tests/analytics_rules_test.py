@@ -1,6 +1,5 @@
 """Tests for v30 Analytics Rules endpoints (client.analytics.rules)."""
 
-from __future__ import annotations
 
 import pytest
 

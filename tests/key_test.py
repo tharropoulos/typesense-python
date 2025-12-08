@@ -1,6 +1,5 @@
 """Tests for the Key class."""
 
-from __future__ import annotations
 
 
 from tests.utils.object_assertions import (

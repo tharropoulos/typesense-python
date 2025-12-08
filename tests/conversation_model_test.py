@@ -1,6 +1,5 @@
 """Tests for the ConversationModel class."""
 
-from __future__ import annotations
 
 import pytest
 from dotenv import load_dotenv

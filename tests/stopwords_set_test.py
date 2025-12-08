@@ -1,6 +1,5 @@
 """Tests for the StopwordsSet class."""
 
-from __future__ import annotations
 
 
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match

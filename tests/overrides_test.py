@@ -1,6 +1,5 @@
 """Tests for the Overrides class."""
 
-from __future__ import annotations
 
 import pytest
 

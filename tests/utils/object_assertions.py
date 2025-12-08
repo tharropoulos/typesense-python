@@ -1,7 +1,5 @@
 """Utility functions for asserting that objects have the same attribute values."""
 
-from __future__ import annotations
-
 import difflib
 import sys
 

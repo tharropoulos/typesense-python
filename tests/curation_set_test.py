@@ -1,6 +1,5 @@
 """Tests for the CurationSet class including items APIs."""
 
-from __future__ import annotations
 
 import pytest
 

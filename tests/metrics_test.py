@@ -1,6 +1,5 @@
 """Tests for the Metrics class."""
 
-from __future__ import annotations
 
 from tests.utils.object_assertions import (
     assert_match_object,

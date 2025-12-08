@@ -1,6 +1,5 @@
 """Tests for the ConversationsModels class."""
 
-from __future__ import annotations
 
 import os
 import sys

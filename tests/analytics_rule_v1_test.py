@@ -1,6 +1,5 @@
 """Tests for the AnalyticsRuleV1 class."""
 
-from __future__ import annotations
 
 import pytest
 
