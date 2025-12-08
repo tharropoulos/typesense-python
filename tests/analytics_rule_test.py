@@ -1,13 +1,12 @@
 """Unit tests for per-rule AnalyticsRule operations."""
 
-from __future__ import annotations
-
 import pytest
 
 from tests.utils.version import is_v30_or_above
 from typesense.client import Client
 from typesense.analytics_rule import AnalyticsRule
 from typesense.analytics_rules import AnalyticsRules
+from typesense.async_analytics_rules import AsyncAnalyticsRules
 
 
 pytestmark = pytest.mark.skipif(
@@ -40,4 +39,24 @@ def test_actual_rule_delete(
     create_analytics_rule: None,
 ) -> None:
     resp = actual_analytics_rules["company_analytics_rule"].delete()
+    assert resp["name"] == "company_analytics_rule"
+
+
+async def test_actual_rule_retrieve_async(
+    actual_async_analytics_rules: AsyncAnalyticsRules,
+    delete_all: None,
+    delete_all_analytics_rules: None,
+    create_analytics_rule: None,
+) -> None:
+    resp = await actual_async_analytics_rules["company_analytics_rule"].retrieve()
+    assert resp["name"] == "company_analytics_rule"
+
+
+async def test_actual_rule_delete_async(
+    actual_async_analytics_rules: AsyncAnalyticsRules,
+    delete_all: None,
+    delete_all_analytics_rules: None,
+    create_analytics_rule: None,
+) -> None:
+    resp = await actual_async_analytics_rules["company_analytics_rule"].delete()
     assert resp["name"] == "company_analytics_rule"
