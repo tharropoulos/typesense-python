@@ -4,6 +4,9 @@ import pytest
 import requests
 
 from typesense.api_call import ApiCall
+from typesense.async_api_call import AsyncApiCall
+from typesense.async_override import AsyncOverride
+from typesense.async_overrides import AsyncOverrides
 from typesense.override import Override
 from typesense.overrides import Overrides
 
@@ -38,3 +41,25 @@ def fake_overrides_fixture(fake_api_call: ApiCall) -> Overrides:
 def fake_override_fixture(fake_api_call: ApiCall) -> Override:
     """Return a Override object with test values."""
     return Override(fake_api_call, "companies", "company_override")
+
+
+@pytest.fixture(scope="function", name="actual_async_overrides")
+def actual_async_overrides_fixture(
+    actual_async_api_call: AsyncApiCall,
+) -> AsyncOverrides:
+    """Return a AsyncOverrides object using a real API."""
+    return AsyncOverrides(actual_async_api_call, "companies")
+
+
+@pytest.fixture(scope="function", name="fake_async_overrides")
+def fake_async_overrides_fixture(
+    fake_async_api_call: AsyncApiCall,
+) -> AsyncOverrides:
+    """Return a AsyncOverrides object with test values."""
+    return AsyncOverrides(fake_async_api_call, "companies")
+
+
+@pytest.fixture(scope="function", name="fake_async_override")
+def fake_async_override_fixture(fake_async_api_call: AsyncApiCall) -> AsyncOverride:
+    """Return a AsyncOverride object with test values."""
+    return AsyncOverride(fake_async_api_call, "companies", "company_override")
