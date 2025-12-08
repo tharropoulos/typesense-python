@@ -35,7 +35,7 @@ from typesense.overrides import Overrides
 from typesense.synonyms import Synonyms
 from typesense.types.document import DocumentSchema
 
-TDoc = typing.TypeVar("TDoc", bound=DocumentSchema)
+TDoc = typing.TypeVar("TDoc", bound=DocumentSchema, covariant=True)
 
 
 class Collection(typing.Generic[TDoc]):

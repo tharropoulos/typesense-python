@@ -28,7 +28,7 @@ from typesense.collection import Collection
 from typesense.types.collection import CollectionCreateSchema, CollectionSchema
 from typesense.types.document import DocumentSchema
 
-TDoc = typing.TypeVar("TDoc", bound=DocumentSchema)
+TDoc = typing.TypeVar("TDoc", bound=DocumentSchema, covariant=True)
 
 
 class Collections(typing.Generic[TDoc]):
