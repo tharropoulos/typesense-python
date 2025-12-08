@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from tests.utils.version import is_v30_or_above
+from typesense.async_synonym_sets import AsyncSynonymSets
 from typesense.client import Client
 from typesense.synonym_sets import SynonymSets
 from typesense.types.synonym_set import (
@@ -81,5 +82,70 @@ def test_actual_delete_item(
 ) -> None:
     """Test that the SynonymSet object can delete an item from Typesense Server."""
     response = actual_synonym_sets["test-set"].delete_item("company_synonym")
+
+    assert response == {"id": "company_synonym"}
+
+
+async def test_actual_list_items_async(
+    actual_async_synonym_sets: AsyncSynonymSets,
+    delete_all_synonym_sets: None,
+    create_synonym_set: None,
+) -> None:
+    """Test that the AsyncSynonymSet object can list items from Typesense Server."""
+    response = await actual_async_synonym_sets["test-set"].list_items()
+
+    assert response == [
+        {
+            "id": "company_synonym",
+            "root": "",
+            "synonyms": ["companies", "corporations", "firms"],
+        },
+    ]
+
+
+async def test_actual_get_item_async(
+    actual_async_synonym_sets: AsyncSynonymSets,
+    delete_all_synonym_sets: None,
+    create_synonym_set: None,
+) -> None:
+    """Test that the AsyncSynonymSet object can get a specific item from Typesense Server."""
+    response = await actual_async_synonym_sets["test-set"].get_item("company_synonym")
+
+    assert response == {
+        "id": "company_synonym",
+        "root": "",
+        "synonyms": ["companies", "corporations", "firms"],
+    }
+
+
+async def test_actual_upsert_item_async(
+    actual_async_synonym_sets: AsyncSynonymSets,
+    delete_all_synonym_sets: None,
+    create_synonym_set: None,
+) -> None:
+    """Test that the AsyncSynonymSet object can upsert an item in Typesense Server."""
+    payload: SynonymItemSchema = {
+        "id": "brand_synonym",
+        "synonyms": ["brand", "brands", "label"],
+    }
+    response = await actual_async_synonym_sets["test-set"].upsert_item(
+        "brand_synonym", payload
+    )
+
+    assert response == {
+        "id": "brand_synonym",
+        "synonyms": ["brand", "brands", "label"],
+    }
+
+
+async def test_actual_delete_item_async(
+    actual_async_synonym_sets: AsyncSynonymSets,
+    delete_all_synonym_sets: None,
+    create_synonym_set: None,
+) -> None:
+    """Test that the AsyncSynonymSet object can delete an item from Typesense Server."""
+    response = await actual_async_synonym_sets["test-set"].delete_item(
+        "company_synonym"
+    )
 
     assert response == {"id": "company_synonym"}
