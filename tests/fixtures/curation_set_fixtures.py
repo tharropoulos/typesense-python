@@ -4,6 +4,9 @@ import pytest
 import requests
 
 from typesense.api_call import ApiCall
+from typesense.async_api_call import AsyncApiCall
+from typesense.async_curation_set import AsyncCurationSet
+from typesense.async_curation_sets import AsyncCurationSets
 from typesense.curation_set import CurationSet
 from typesense.curation_sets import CurationSets
 
@@ -69,3 +72,27 @@ def fake_curation_sets_fixture(fake_api_call: ApiCall) -> CurationSets:
 def fake_curation_set_fixture(fake_api_call: ApiCall) -> CurationSet:
     """Return a CurationSet object with test values."""
     return CurationSet(fake_api_call, "products")
+
+
+@pytest.fixture(scope="function", name="actual_async_curation_sets")
+def actual_async_curation_sets_fixture(
+    actual_async_api_call: AsyncApiCall,
+) -> AsyncCurationSets:
+    """Return a AsyncCurationSets object using a real API."""
+    return AsyncCurationSets(actual_async_api_call)
+
+
+@pytest.fixture(scope="function", name="fake_async_curation_sets")
+def fake_async_curation_sets_fixture(
+    fake_async_api_call: AsyncApiCall,
+) -> AsyncCurationSets:
+    """Return a AsyncCurationSets object with test values."""
+    return AsyncCurationSets(fake_async_api_call)
+
+
+@pytest.fixture(scope="function", name="fake_async_curation_set")
+def fake_async_curation_set_fixture(
+    fake_async_api_call: AsyncApiCall,
+) -> AsyncCurationSet:
+    """Return a AsyncCurationSet object with test values."""
+    return AsyncCurationSet(fake_async_api_call, "products")
