@@ -13,6 +13,9 @@ else:
     import typing_extensions as typing
 
 from typesense.api_call import ApiCall
+from typesense.async_api_call import AsyncApiCall
+from typesense.async_document import AsyncDocument
+from typesense.async_documents import AsyncDocuments
 from typesense.document import Document
 from typesense.documents import Documents
 
@@ -51,6 +54,28 @@ def fake_documents_fixture(fake_api_call: ApiCall) -> Documents:
 def fake_document_fixture(fake_api_call: ApiCall) -> Document:
     """Return a Document object with test values."""
     return Document(fake_api_call, "companies", "0")
+
+
+@pytest.fixture(scope="function", name="actual_async_documents")
+def actual_async_documents_fixture(
+    actual_async_api_call: AsyncApiCall,
+) -> AsyncDocuments:
+    """Return a AsyncDocuments object using a real API."""
+    return AsyncDocuments(actual_async_api_call, "companies")
+
+
+@pytest.fixture(scope="function", name="fake_async_documents")
+def fake_async_documents_fixture(
+    fake_async_api_call: AsyncApiCall,
+) -> AsyncDocuments:
+    """Return a AsyncDocuments object with test values."""
+    return AsyncDocuments(fake_async_api_call, "companies")
+
+
+@pytest.fixture(scope="function", name="fake_async_document")
+def fake_async_document_fixture(fake_async_api_call: AsyncApiCall) -> AsyncDocument:
+    """Return a AsyncDocument object with test values."""
+    return AsyncDocument(fake_async_api_call, "companies", "0")
 
 
 class Companies(typing.TypedDict):

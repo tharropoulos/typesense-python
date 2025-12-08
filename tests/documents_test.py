@@ -19,6 +19,8 @@ from tests.utils.object_assertions import (
     assert_to_contain_keys,
 )
 from typesense.api_call import ApiCall
+from typesense.async_api_call import AsyncApiCall
+from typesense.async_documents import AsyncDocuments
 from typesense.documents import Documents
 from typesense.exceptions import InvalidParameter, TypesenseClientError
 
@@ -40,6 +42,23 @@ def test_init(fake_api_call: ApiCall) -> None:
     assert not documents.documents
 
 
+def test_init_async(fake_async_api_call: AsyncApiCall) -> None:
+    """Test that the AsyncDocuments object is initialized correctly."""
+    documents = AsyncDocuments(fake_async_api_call, "companies")
+
+    assert_match_object(documents.api_call, fake_async_api_call)
+    assert_object_lists_match(
+        documents.api_call.node_manager.nodes,
+        fake_async_api_call.node_manager.nodes,
+    )
+    assert_match_object(
+        documents.api_call.config.nearest_node,
+        fake_async_api_call.config.nearest_node,
+    )
+
+    assert not documents.documents
+
+
 def test_get_missing_document(fake_documents: Documents) -> None:
     """Test that the Documents object can get a missing document."""
     document = fake_documents["1"]
@@ -51,6 +70,24 @@ def test_get_missing_document(fake_documents: Documents) -> None:
     assert_match_object(
         document.api_call.config.nearest_node,
         fake_documents.api_call.config.nearest_node,
+    )
+    assert (
+        document._endpoint_path == "/collections/companies/documents/1"  # noqa: WPS437
+    )
+
+
+def test_get_missing_document_async(fake_async_documents: AsyncDocuments) -> None:
+    """Test that the AsyncDocuments object can get a missing document."""
+    document = fake_async_documents["1"]
+
+    assert_match_object(document.api_call, fake_async_documents.api_call)
+    assert_object_lists_match(
+        document.api_call.node_manager.nodes,
+        fake_async_documents.api_call.node_manager.nodes,
+    )
+    assert_match_object(
+        document.api_call.config.nearest_node,
+        fake_async_documents.api_call.config.nearest_node,
     )
     assert (
         document._endpoint_path == "/collections/companies/documents/1"  # noqa: WPS437
@@ -469,3 +506,75 @@ def test_search_invalid_parameters(
                 "invalid": Companies(company_name="", id="", num_employees=0),
             },
         )
+
+
+async def test_upsert_async(
+    actual_async_documents: AsyncDocuments[Companies],
+    delete_all: None,
+    create_collection: None,
+) -> None:
+    """Test that the AsyncDocuments object can upsert a document on Typesense server."""
+    company: Companies = {
+        "company_name": "company",
+        "id": "0",
+        "num_employees": 10,
+    }
+    response = await actual_async_documents.upsert(company)
+
+    assert response == company
+
+
+async def test_export_async(
+    actual_async_documents: AsyncDocuments[Companies],
+    delete_all: None,
+    create_collection: None,
+    create_document: None,
+) -> None:
+    """Test that the AsyncDocuments object can export a document from Typesense server."""
+    response = await actual_async_documents.export()
+    assert response == '{"company_name":"Company","id":"0","num_employees":10}'
+
+
+async def test_delete_async(
+    actual_async_documents: AsyncDocuments[Companies],
+    delete_all: None,
+    create_collection: None,
+    create_document: None,
+) -> None:
+    """Test that the AsyncDocuments object can delete a document from Typesense server."""
+    response = await actual_async_documents.delete({"filter_by": "company_name:Company"})
+    assert response == {"num_deleted": 1}
+
+
+async def test_search_async(
+    actual_async_documents: AsyncDocuments[Companies],
+    delete_all: None,
+    create_collection: None,
+    create_document: None,
+) -> None:
+    """Test that the AsyncDocuments object can search for documents on Typesense server."""
+    response = await actual_async_documents.search(
+        {
+            "q": "com",
+            "query_by": "company_name",
+        },
+    )
+
+    assert_to_contain_keys(
+        response,
+        [
+            "facet_counts",
+            "found",
+            "hits",
+            "page",
+            "out_of",
+            "request_params",
+            "search_time_ms",
+            "search_cutoff",
+        ],
+    )
+
+    assert_to_contain_keys(
+        response.get("hits")[0],
+        ["document", "highlights", "highlight", "text_match", "text_match_info"],
+    )
