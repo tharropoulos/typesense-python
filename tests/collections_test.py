@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import sys
 
-import requests_mock
+from typesense.async_api_call import AsyncApiCall
+
 
 if sys.version_info >= (3, 11):
     import typing
@@ -14,6 +15,7 @@ else:
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
 from typesense.api_call import ApiCall
 from typesense.collections import Collections
+from typesense.async_collections import AsyncCollections
 from typesense.types.collection import CollectionSchema
 
 
@@ -33,6 +35,22 @@ def test_init(fake_api_call: ApiCall) -> None:
     assert not collections.collections
 
 
+def test_init_async(fake_async_api_call: AsyncApiCall) -> None:
+    """Test that the Collections object is initialized correctly."""
+    collections = AsyncCollections(fake_async_api_call)
+
+    assert_match_object(collections.api_call, fake_async_api_call)
+    assert_object_lists_match(
+        collections.api_call.node_manager.nodes,
+        fake_async_api_call.node_manager.nodes,
+    )
+    assert_match_object(
+        collections.api_call.config.nearest_node,
+        fake_async_api_call.config.nearest_node,
+    )
+    assert not collections.collections
+
+
 def test_get_missing_collection(fake_collections: Collections) -> None:
     """Test that the Collections object can get a missing collection."""
     collection = fake_collections["companies"]
@@ -46,6 +64,24 @@ def test_get_missing_collection(fake_collections: Collections) -> None:
     assert_match_object(
         collection.api_call.config.nearest_node,
         fake_collections.api_call.config.nearest_node,
+    )
+    assert collection.overrides.collection_name == "companies"
+    assert collection._endpoint_path == "/collections/companies"  # noqa: WPS437
+
+
+def test_get_missing_collection_async(fake_async_collections: Collections) -> None:
+    """Test that the Collections object can get a missing collection."""
+    collection = fake_async_collections["companies"]
+
+    assert collection.name == "companies"
+    assert_match_object(collection.api_call, fake_async_collections.api_call)
+    assert_object_lists_match(
+        collection.api_call.node_manager.nodes,
+        fake_async_collections.api_call.node_manager.nodes,
+    )
+    assert_match_object(
+        collection.api_call.config.nearest_node,
+        fake_async_collections.api_call.config.nearest_node,
     )
     assert collection.overrides.collection_name == "companies"
     assert collection._endpoint_path == "/collections/companies"  # noqa: WPS437
@@ -194,3 +230,125 @@ def test_actual_contains(
     assert "non_existent_collection" not in actual_collections
     # Test again
     assert "non_existent_collection" not in actual_collections
+
+
+async def test_actual_create_async(
+    actual_async_collections: AsyncCollections, delete_all: None
+) -> None:
+    """Test that the Collections object can create a collection on Typesense Server."""
+    expected: CollectionSchema = {
+        "default_sorting_field": "",
+        "enable_nested_fields": False,
+        "fields": [
+            {
+                "name": "company_name",
+                "type": "string",
+                "facet": False,
+                "index": True,
+                "optional": False,
+                "locale": "",
+                "sort": False,
+                "infix": False,
+                "stem": False,
+                "stem_dictionary": "",
+                "truncate_len": 100,
+                "store": True,
+            },
+            {
+                "name": "num_employees",
+                "type": "int32",
+                "facet": False,
+                "index": True,
+                "optional": False,
+                "locale": "",
+                "sort": False,
+                "infix": False,
+                "stem": False,
+                "stem_dictionary": "",
+                "truncate_len": 100,
+                "store": True,
+            },
+        ],
+        "name": "companies",
+        "num_documents": 0,
+        "symbols_to_index": [],
+        "token_separators": [],
+        "synonym_sets": [],
+        "curation_sets": [],
+    }
+
+    response = await actual_async_collections.create(
+        {
+            "name": "companies",
+            "fields": [
+                {
+                    "name": "company_name",
+                    "type": "string",
+                },
+                {
+                    "name": "num_employees",
+                    "type": "int32",
+                    "sort": False,
+                },
+            ],
+        },
+    )
+
+    response.pop("created_at")
+
+    assert response == expected
+
+
+async def test_actual_retrieve_async(
+    actual_async_collections: AsyncCollections,
+    delete_all: None,
+    create_collection: None,
+) -> None:
+    """Test that the Collections object can retrieve collections."""
+    response = await actual_async_collections.retrieve()
+
+    expected: typing.List[CollectionSchema] = [
+        {
+            "default_sorting_field": "num_employees",
+            "enable_nested_fields": False,
+            "fields": [
+                {
+                    "name": "company_name",
+                    "type": "string",
+                    "facet": False,
+                    "index": True,
+                    "optional": False,
+                    "locale": "",
+                    "sort": False,
+                    "infix": False,
+                    "stem": False,
+                    "stem_dictionary": "",
+                    "truncate_len": 100,
+                    "store": True,
+                },
+                {
+                    "name": "num_employees",
+                    "type": "int32",
+                    "facet": False,
+                    "index": True,
+                    "optional": False,
+                    "locale": "",
+                    "sort": True,
+                    "infix": False,
+                    "stem": False,
+                    "stem_dictionary": "",
+                    "truncate_len": 100,
+                    "store": True,
+                },
+            ],
+            "name": "companies",
+            "num_documents": 0,
+            "symbols_to_index": [],
+            "token_separators": [],
+            "synonym_sets": [],
+            "curation_sets": [],
+        },
+    ]
+
+    response[0].pop("created_at")
+    assert response == expected
