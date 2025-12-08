@@ -4,6 +4,9 @@ import pytest
 import requests
 
 from typesense.api_call import ApiCall
+from typesense.async_api_call import AsyncApiCall
+from typesense.async_synonym import AsyncSynonym
+from typesense.async_synonyms import AsyncSynonyms
 from typesense.synonym import Synonym
 from typesense.synonyms import Synonyms
 
@@ -42,3 +45,25 @@ def actual_synonyms_fixture(actual_api_call: ApiCall) -> Synonyms:
 def fake_synonym_fixture(fake_api_call: ApiCall) -> Synonym:
     """Return a Synonym object with test values."""
     return Synonym(fake_api_call, "companies", "company_synonym")
+
+
+@pytest.fixture(scope="function", name="actual_async_synonyms")
+def actual_async_synonyms_fixture(
+    actual_async_api_call: AsyncApiCall,
+) -> AsyncSynonyms:
+    """Return a AsyncSynonyms object using a real API."""
+    return AsyncSynonyms(actual_async_api_call, "companies")
+
+
+@pytest.fixture(scope="function", name="fake_async_synonyms")
+def fake_async_synonyms_fixture(
+    fake_async_api_call: AsyncApiCall,
+) -> AsyncSynonyms:
+    """Return a AsyncSynonyms object with test values."""
+    return AsyncSynonyms(fake_async_api_call, "companies")
+
+
+@pytest.fixture(scope="function", name="fake_async_synonym")
+def fake_async_synonym_fixture(fake_async_api_call: AsyncApiCall) -> AsyncSynonym:
+    """Return a AsyncSynonym object with test values."""
+    return AsyncSynonym(fake_async_api_call, "companies", "company_synonym")
