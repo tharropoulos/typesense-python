@@ -11,6 +11,9 @@ from tests.utils.object_assertions import (
     assert_to_contain_keys,
 )
 from typesense.api_call import ApiCall
+from typesense.async_api_call import AsyncApiCall
+from typesense.async_conversation_model import AsyncConversationModel
+from typesense.async_conversations_models import AsyncConversationsModels
 from typesense.conversation_model import ConversationModel
 from typesense.conversations_models import ConversationsModels
 from typesense.types.conversations_model import (
@@ -37,6 +40,29 @@ def test_init(fake_api_call: ApiCall) -> None:
     assert_match_object(
         conversation_model.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,
+    )
+    assert (
+        conversation_model._endpoint_path  # noqa: WPS437
+        == "/conversations/models/conversation_model_id"
+    )
+
+
+def test_init_async(fake_async_api_call: AsyncApiCall) -> None:
+    """Test that the AsyncConversationModel object is initialized correctly."""
+    conversation_model = AsyncConversationModel(
+        fake_async_api_call,
+        "conversation_model_id",
+    )
+
+    assert conversation_model.model_id == "conversation_model_id"
+    assert_match_object(conversation_model.api_call, fake_async_api_call)
+    assert_object_lists_match(
+        conversation_model.api_call.node_manager.nodes,
+        fake_async_api_call.node_manager.nodes,
+    )
+    assert_match_object(
+        conversation_model.api_call.config.nearest_node,
+        fake_async_api_call.config.nearest_node,
     )
     assert (
         conversation_model._endpoint_path  # noqa: WPS437
@@ -96,6 +122,83 @@ def test_actual_delete(
 ) -> None:
     """Test that it can delete an conversation_model from Typesense Server."""
     response = actual_conversations_models[create_conversations_model].delete()
+
+    assert_to_contain_keys(
+        response,
+        [
+            "id",
+            "model_name",
+            "system_prompt",
+            "max_bytes",
+            "api_key",
+            "ttl",
+            "history_collection",
+        ],
+    )
+
+    assert response.get("system_prompt") == "This is a system prompt"
+    assert response.get("id") == create_conversations_model
+    assert response.get("id") == create_conversations_model
+
+
+@pytest.mark.open_ai
+async def test_actual_retrieve_async(
+    actual_async_conversations_models: AsyncConversationsModels,
+    delete_all_conversations_models: None,
+    create_conversations_model: str,
+) -> None:
+    """Test it can retrieve a conversation_model from Typesense Server."""
+    response = await actual_async_conversations_models[
+        create_conversations_model
+    ].retrieve()
+
+    assert_to_contain_keys(
+        response,
+        ["id", "model_name", "system_prompt", "max_bytes", "api_key"],
+    )
+    assert response.get("id") == create_conversations_model
+
+
+@pytest.mark.open_ai
+async def test_actual_update_async(
+    actual_async_conversations_models: AsyncConversationsModels,
+    delete_all_conversations_models: None,
+    create_conversations_model: str,
+) -> None:
+    """Test that it can update a conversation_model from Typesense Server."""
+    response = await actual_async_conversations_models[
+        create_conversations_model
+    ].update(
+        {"system_prompt": "This is a new system prompt"},
+    )
+
+    assert_to_contain_keys(
+        response,
+        [
+            "id",
+            "model_name",
+            "system_prompt",
+            "max_bytes",
+            "api_key",
+            "ttl",
+            "history_collection",
+        ],
+    )
+
+    assert response.get("system_prompt") == "This is a new system prompt"
+    assert response.get("id") == create_conversations_model
+
+
+@pytest.mark.open_ai
+async def test_actual_delete_async(
+    actual_async_conversations_models: AsyncConversationsModels,
+    delete_all_conversations_models: None,
+    create_conversations_model: str,
+) -> None:
+    """Test that it can delete an conversation_model from Typesense Server."""
+    response = await actual_async_conversations_models[
+        create_conversations_model
+    ].delete()
 
     assert_to_contain_keys(
         response,
