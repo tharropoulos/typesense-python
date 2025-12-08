@@ -7,6 +7,9 @@ import requests
 from dotenv import load_dotenv
 
 from typesense.api_call import ApiCall
+from typesense.async_api_call import AsyncApiCall
+from typesense.async_nl_search_model import AsyncNLSearchModel
+from typesense.async_nl_search_models import AsyncNLSearchModels
 from typesense.nl_search_model import NLSearchModel
 from typesense.nl_search_models import NLSearchModels
 
@@ -76,3 +79,27 @@ def actual_nl_search_models_fixture(
 ) -> NLSearchModels:
     """Return an NLSearchModels object using a real API."""
     return NLSearchModels(actual_api_call)
+
+
+@pytest.fixture(scope="function", name="actual_async_nl_search_models")
+def actual_async_nl_search_models_fixture(
+    actual_async_api_call: AsyncApiCall,
+) -> AsyncNLSearchModels:
+    """Return a AsyncNLSearchModels object using a real API."""
+    return AsyncNLSearchModels(actual_async_api_call)
+
+
+@pytest.fixture(scope="function", name="fake_async_nl_search_models")
+def fake_async_nl_search_models_fixture(
+    fake_async_api_call: AsyncApiCall,
+) -> AsyncNLSearchModels:
+    """Return a AsyncNLSearchModels object with test values."""
+    return AsyncNLSearchModels(fake_async_api_call)
+
+
+@pytest.fixture(scope="function", name="fake_async_nl_search_model")
+def fake_async_nl_search_model_fixture(
+    fake_async_api_call: AsyncApiCall,
+) -> AsyncNLSearchModel:
+    """Return a AsyncNLSearchModel object with test values."""
+    return AsyncNLSearchModel(fake_async_api_call, "nl_search_model_id")
