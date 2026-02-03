@@ -9,10 +9,6 @@ from typesense.analytics_rules_v1 import AnalyticsRulesV1
 from typesense.api_call import ApiCall
 from typesense.async_api_call import AsyncApiCall
 from typesense.async_analytics_rules_v1 import AsyncAnalyticsRulesV1
-from typesense.types.analytics_rule_v1 import (
-    RuleCreateSchemaForQueries,
-    RulesRetrieveSchema,
-)
 
 
 pytestmark = pytest.mark.skipif(
@@ -180,7 +176,6 @@ def test_get_missing_analytics_rule_async(
     fake_async_analytics_rules_v1: AsyncAnalyticsRulesV1,
 ) -> None:
     """Test that the AsyncAnalyticsRulesV1 object can get a missing analytics_rule."""
-    from typesense.async_analytics_rule_v1 import AsyncAnalyticsRuleV1
 
     analytics_rule = fake_async_analytics_rules_v1["company_analytics_rule"]
 

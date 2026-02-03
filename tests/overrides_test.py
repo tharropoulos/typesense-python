@@ -12,7 +12,7 @@ from typesense.api_call import ApiCall
 from typesense.async_api_call import AsyncApiCall
 from typesense.async_collections import AsyncCollections
 from typesense.collections import Collections
-from typesense.overrides import OverrideRetrieveSchema, Overrides, OverrideSchema
+from typesense.overrides import Overrides
 from tests.utils.version import is_v30_or_above
 from typesense.client import Client
 
@@ -172,7 +172,6 @@ def test_init_async(fake_async_api_call: AsyncApiCall) -> None:
 
 def test_get_missing_override_async(fake_async_overrides) -> None:
     """Test that the AsyncOverrides object can get a missing override."""
-    from typesense.async_overrides import AsyncOverrides
 
     override = fake_async_overrides["company_override"]
 

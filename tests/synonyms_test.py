@@ -14,7 +14,7 @@ from typesense.async_collections import AsyncCollections
 from typesense.collections import Collections
 from tests.utils.version import is_v30_or_above
 from typesense.client import Client
-from typesense.synonyms import Synonyms, SynonymSchema, SynonymsRetrieveSchema
+from typesense.synonyms import Synonyms
 
 
 pytestmark = pytest.mark.skipif(
@@ -160,7 +160,6 @@ def test_init_async(fake_async_api_call: AsyncApiCall) -> None:
 
 def test_get_missing_synonym_async(fake_async_synonyms) -> None:
     """Test that the AsyncSynonyms object can get a missing synonym."""
-    from typesense.async_synonyms import AsyncSynonyms
 
     synonym = fake_async_synonyms["company_synonym"]
 

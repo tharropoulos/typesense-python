@@ -15,10 +15,6 @@ from typesense.async_conversation_model import AsyncConversationModel
 from typesense.async_conversations_models import AsyncConversationsModels
 from typesense.conversation_model import ConversationModel
 from typesense.conversations_models import ConversationsModels
-from typesense.types.conversations_model import (
-    ConversationModelDeleteSchema,
-    ConversationModelSchema,
-)
 
 load_dotenv()
 

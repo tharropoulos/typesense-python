@@ -1,6 +1,5 @@
 """Tests for stemming."""
 
-from typesense.async_api_call import AsyncApiCall
 from typesense.async_stemming import AsyncStemming
 from typesense.stemming import Stemming
 

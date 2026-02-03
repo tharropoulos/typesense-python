@@ -6,11 +6,6 @@ import sys
 
 import pytest
 
-if sys.version_info >= (3, 11):
-    import typing
-else:
-    import typing_extensions as typing
-
 from tests.utils.object_assertions import (
     assert_match_object,
     assert_object_lists_match,
@@ -21,7 +16,6 @@ from typesense.api_call import ApiCall
 from typesense.async_api_call import AsyncApiCall
 from typesense.async_conversations_models import AsyncConversationsModels
 from typesense.conversations_models import ConversationsModels
-from typesense.types.conversations_model import ConversationModelSchema
 
 
 def test_init(fake_api_call: ApiCall) -> None:

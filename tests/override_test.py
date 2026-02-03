@@ -13,8 +13,7 @@ from typesense.async_api_call import AsyncApiCall
 from typesense.async_collections import AsyncCollections
 from typesense.async_override import AsyncOverride
 from typesense.collections import Collections
-from typesense.override import Override, OverrideDeleteSchema
-from typesense.types.override import OverrideSchema
+from typesense.override import Override
 from tests.utils.version import is_v30_or_above
 from typesense.client import Client
 
