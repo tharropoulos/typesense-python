@@ -78,10 +78,13 @@ class AsyncAnalyticsRuleV1:
             RuleSchemaForQueries, RuleSchemaForCounters
         ] = await self.api_call.get(
             self._endpoint_path,
-            entity_type=typing.Union[RuleSchemaForQueries, RuleSchemaForCounters],
+            entity_type=dict,
             as_json=True,
         )
-        return response
+        return typing.cast(
+            typing.Union[RuleSchemaForQueries, RuleSchemaForCounters],
+            response,
+        )
 
     async def delete(self) -> RuleDeleteSchema:
         """
