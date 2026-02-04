@@ -16,6 +16,32 @@ You can find some examples [here](https://github.com/typesense/typesense-python/
 
 See detailed [API documentation](https://typesense.org/api).
 
+## Async usage
+
+Use `AsyncClient` when working in an async runtime:
+
+```python
+import asyncio
+import typesense
+
+
+async def main() -> None:
+    client = typesense.AsyncClient({
+        "api_key": "abcd",
+        "nodes": [{"host": "localhost", "port": "8108", "protocol": "http"}],
+        "connection_timeout_seconds": 2,
+    })
+
+    print(await client.collections.retrieve())
+    await client.api_call.aclose()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+See `examples/async_collection_operations.py` for a fuller async walkthrough.
+
 ## Compatibility
 
 | Typesense Server | typesense-python |
