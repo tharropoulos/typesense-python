@@ -48,6 +48,14 @@ def run_unasync(output_dir: Path, check: bool = False) -> None:
     )
     filepaths = collect_files(source_dir)
     unasync.unasync_files(filepaths, [rule])
+    if replacements:
+        for path in target_dir.rglob("*.py"):
+            text = path.read_text()
+            new_text = text
+            for old, new in replacements.items():
+                new_text = new_text.replace(old, new)
+            if new_text != text:
+                path.write_text(new_text)
 
     if check:
         diffs: list[str] = []
