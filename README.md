@@ -46,6 +46,8 @@ See `examples/async_collection_operations.py` for a fuller async walkthrough.
 
 | Typesense Server | typesense-python |
 |------------------|------------------|
+| \>= v30.0        | \>= v2.0.0       |
+| \>= v28.0        | \>= v1.0.0       |
 | \>= v26.0        | \>= v0.20.0      |
 | \>= v0.25.0      | \>= v0.16.0      |
 | \>= v0.23.0      | \>= v0.14.0      |
