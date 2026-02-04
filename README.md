@@ -60,7 +60,11 @@ See `examples/async_collection_operations.py` for a fuller async walkthrough.
 
 ## Contributing
 
+> [!NOTE]
+> Development happens in async-only code; sync code is generated automatically via `utils/run-unasync.py`.
+
 Bug reports and pull requests are welcome on GitHub at [https://github.com/typesense/typesense-python].
+If you change any part of the client's source code, run `uv run utils/run-unasync.py` before opening a PR to keep the generated sync files in sync.
 
 ## License
 
