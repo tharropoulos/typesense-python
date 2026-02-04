@@ -1,5 +1,5 @@
-from .client import Client  # NOQA
-from .async_client import AsyncClient  # NOQA
+from .sync.client import Client  # NOQA
+from .async_.client import AsyncClient  # NOQA
 
 
 __version__ = "2.0.0"
