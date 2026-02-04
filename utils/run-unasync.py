@@ -1,4 +1,5 @@
 import argparse
+import difflib
 import filecmp
 import os
 import re
@@ -65,7 +66,25 @@ def run_unasync(output_dir: Path, check: bool = False) -> None:
                 "",
                 "Differences:",
             ]
-            raise SystemExit("\n".join([*header, *diffs]))
+            details: list[str] = []
+            first_diff = next((d for d in diffs if d.startswith("Differs: ")), None)
+            if first_diff:
+                mismatch = first_diff.replace("Differs: ", "")
+                generated = target_dir / Path(mismatch).relative_to(SYNC_DIR)
+                if generated.exists() and Path(mismatch).exists():
+                    expected_lines = Path(mismatch).read_text().splitlines()
+                    generated_lines = generated.read_text().splitlines()
+                    diff_lines = list(
+                        difflib.unified_diff(
+                            expected_lines,
+                            generated_lines,
+                            fromfile=mismatch,
+                            tofile=str(generated),
+                            lineterm="",
+                        )
+                    )
+                    details.extend(["", "Sample diff:", *diff_lines[:200]])
+            raise SystemExit("\n".join([*header, *diffs, *details]))
 
 
 def main() -> None:
