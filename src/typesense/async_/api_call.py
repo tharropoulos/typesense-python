@@ -205,7 +205,7 @@ class AsyncApiCall:
         self,
         endpoint: str,
         entity_type: typing.Type[TEntityDict],
-        as_json: typing.Literal[True],
+        as_json: typing.Literal[True] = True,
         params: typing.Union[TParams, None] = None,
     ) -> TEntityDict:
         """
@@ -276,7 +276,7 @@ class AsyncApiCall:
         self,
         endpoint: str,
         entity_type: typing.Type[TEntityDict],
-        as_json: typing.Literal[True],
+        as_json: typing.Literal[True] = True,
         params: typing.Union[TParams, None] = None,
         body: typing.Union[TBody, None] = None,
     ) -> TEntityDict:
