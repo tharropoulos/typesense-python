@@ -9,10 +9,10 @@ from tests.utils.object_assertions import (
     assert_to_contain_keys,
 )
 from typesense import exceptions
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_multi_search import AsyncMultiSearch
-from typesense.multi_search import MultiSearch
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.multi_search import AsyncMultiSearch
+from typesense.sync.multi_search import MultiSearch
 from typesense.types.multi_search import MultiSearchRequestSchema
 
 

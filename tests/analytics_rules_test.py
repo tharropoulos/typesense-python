@@ -4,11 +4,11 @@
 import pytest
 
 from tests.utils.version import is_v30_or_above
-from typesense.client import Client
-from typesense.analytics_rules import AnalyticsRules
-from typesense.analytics_rule import AnalyticsRule
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_analytics_rules import AsyncAnalyticsRules
+from typesense.sync.client import Client
+from typesense.sync.analytics_rules import AnalyticsRules
+from typesense.sync.analytics_rule import AnalyticsRule
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.analytics_rules import AsyncAnalyticsRules
 from typesense.types.analytics import AnalyticsRuleCreate
 
 
@@ -86,15 +86,15 @@ def test_actual_retrieve(
 
 
 def test_rules_init_async(fake_async_api_call: AsyncApiCall) -> None:
-    from typesense.async_analytics_rules import AsyncAnalyticsRules
+    from typesense.async_.analytics_rules import AsyncAnalyticsRules
 
     rules = AsyncAnalyticsRules(fake_async_api_call)
     assert rules.rules == {}
 
 
 def test_rule_getitem_async(fake_async_api_call: AsyncApiCall) -> None:
-    from typesense.async_analytics_rules import AsyncAnalyticsRules
-    from typesense.async_analytics_rule import AsyncAnalyticsRule
+    from typesense.async_.analytics_rules import AsyncAnalyticsRules
+    from typesense.async_.analytics_rule import AsyncAnalyticsRule
 
     rules = AsyncAnalyticsRules(fake_async_api_call)
     rule = rules["company_analytics_rule"]

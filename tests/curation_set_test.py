@@ -4,11 +4,11 @@
 import pytest
 
 from tests.utils.version import is_v30_or_above
-from typesense.async_curation_set import AsyncCurationSet
-from typesense.async_curation_sets import AsyncCurationSets
-from typesense.client import Client
-from typesense.curation_set import CurationSet
-from typesense.curation_sets import CurationSets
+from typesense.async_.curation_set import AsyncCurationSet
+from typesense.async_.curation_sets import AsyncCurationSets
+from typesense.sync.client import Client
+from typesense.sync.curation_set import CurationSet
+from typesense.sync.curation_sets import CurationSets
 from typesense.types.curation_set import CurationItemSchema
 
 pytestmark = pytest.mark.skipif(

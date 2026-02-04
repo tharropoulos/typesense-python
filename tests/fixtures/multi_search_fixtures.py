@@ -2,10 +2,10 @@
 
 import pytest
 
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_multi_search import AsyncMultiSearch
-from typesense.multi_search import MultiSearch
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.multi_search import AsyncMultiSearch
+from typesense.sync.multi_search import MultiSearch
 
 
 @pytest.fixture(scope="function", name="actual_multi_search")

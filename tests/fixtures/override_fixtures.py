@@ -3,12 +3,12 @@
 import pytest
 import requests
 
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_override import AsyncOverride
-from typesense.async_overrides import AsyncOverrides
-from typesense.override import Override
-from typesense.overrides import Overrides
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.override import AsyncOverride
+from typesense.async_.overrides import AsyncOverrides
+from typesense.sync.override import Override
+from typesense.sync.overrides import Overrides
 
 
 @pytest.fixture(scope="function", name="create_override")

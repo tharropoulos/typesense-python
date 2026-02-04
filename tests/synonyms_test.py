@@ -8,13 +8,13 @@ from tests.utils.object_assertions import (
     assert_object_lists_match,
     assert_to_contain_object,
 )
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_collections import AsyncCollections
-from typesense.collections import Collections
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.collections import AsyncCollections
+from typesense.sync.collections import Collections
 from tests.utils.version import is_v30_or_above
-from typesense.client import Client
-from typesense.synonyms import Synonyms
+from typesense.sync.client import Client
+from typesense.sync.synonyms import Synonyms
 
 
 pytestmark = pytest.mark.skipif(
@@ -141,7 +141,7 @@ def test_actual_retrieve(
 
 def test_init_async(fake_async_api_call: AsyncApiCall) -> None:
     """Test that the AsyncSynonyms object is initialized correctly."""
-    from typesense.async_synonyms import AsyncSynonyms
+    from typesense.async_.synonyms import AsyncSynonyms
 
     synonyms = AsyncSynonyms(fake_async_api_call, "companies")
 

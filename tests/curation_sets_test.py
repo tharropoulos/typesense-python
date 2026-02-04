@@ -8,11 +8,11 @@ from tests.utils.object_assertions import (
     assert_to_contain_object,
 )
 from tests.utils.version import is_v30_or_above
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_curation_sets import AsyncCurationSets
-from typesense.client import Client
-from typesense.curation_sets import CurationSets
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.curation_sets import AsyncCurationSets
+from typesense.sync.client import Client
+from typesense.sync.curation_sets import CurationSets
 
 pytestmark = pytest.mark.skipif(
     not is_v30_or_above(

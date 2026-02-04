@@ -4,9 +4,9 @@
 import pytest
 
 from tests.utils.version import is_v30_or_above
-from typesense.async_synonym_sets import AsyncSynonymSets
-from typesense.client import Client
-from typesense.synonym_sets import SynonymSets
+from typesense.async_.synonym_sets import AsyncSynonymSets
+from typesense.sync.client import Client
+from typesense.sync.synonym_sets import SynonymSets
 from typesense.types.synonym_set import (
     SynonymItemSchema,
 )

@@ -18,7 +18,7 @@ from pytest_mock import MockerFixture
 
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
 from typesense import exceptions
-from typesense.api_call import ApiCall, RequestHandler
+from typesense.sync.api_call import ApiCall, RequestHandler
 from typesense.configuration import Configuration, Node
 from typesense.logger import logger
 

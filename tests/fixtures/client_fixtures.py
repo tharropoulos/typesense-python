@@ -2,7 +2,7 @@
 
 import pytest
 
-from typesense.client import Client
+from typesense.sync.client import Client
 from typesense.configuration import ConfigDict
 
 

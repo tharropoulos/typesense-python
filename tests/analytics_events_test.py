@@ -3,9 +3,9 @@
 import pytest
 
 from tests.utils.version import is_v30_or_above
-from typesense.async_analytics_events import AsyncAnalyticsEvents
-from typesense.async_analytics_rules import AsyncAnalyticsRules
-from typesense.client import Client
+from typesense.async_.analytics_events import AsyncAnalyticsEvents
+from typesense.async_.analytics_rules import AsyncAnalyticsRules
+from typesense.sync.client import Client
 from typesense.types.analytics import AnalyticsEvent
 
 pytestmark = pytest.mark.skipif(

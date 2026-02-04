@@ -12,12 +12,12 @@ if sys.version_info >= (3, 11):
 else:
     import typing_extensions as typing
 
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_document import AsyncDocument
-from typesense.async_documents import AsyncDocuments
-from typesense.document import Document
-from typesense.documents import Documents
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.document import AsyncDocument
+from typesense.async_.documents import AsyncDocuments
+from typesense.sync.document import Document
+from typesense.sync.documents import Documents
 
 fake = Faker()
 fake.add_provider(company)

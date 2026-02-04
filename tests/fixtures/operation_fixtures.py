@@ -2,10 +2,10 @@
 
 import pytest
 
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_operations import AsyncOperations
-from typesense.operations import Operations
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.operations import AsyncOperations
+from typesense.sync.operations import Operations
 
 
 @pytest.fixture(scope="function", name="actual_operations")

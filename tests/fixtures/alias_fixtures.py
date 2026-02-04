@@ -3,12 +3,12 @@
 import pytest
 import requests
 
-from typesense.alias import Alias
-from typesense.aliases import Aliases
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_alias import AsyncAlias
-from typesense.async_aliases import AsyncAliases
+from typesense.sync.alias import Alias
+from typesense.sync.aliases import Aliases
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.alias import AsyncAlias
+from typesense.async_.aliases import AsyncAliases
 
 
 @pytest.fixture(scope="function", name="delete_all_aliases")

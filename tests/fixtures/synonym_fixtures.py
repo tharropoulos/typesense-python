@@ -3,12 +3,12 @@
 import pytest
 import requests
 
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_synonym import AsyncSynonym
-from typesense.async_synonyms import AsyncSynonyms
-from typesense.synonym import Synonym
-from typesense.synonyms import Synonyms
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.synonym import AsyncSynonym
+from typesense.async_.synonyms import AsyncSynonyms
+from typesense.sync.synonym import Synonym
+from typesense.sync.synonyms import Synonyms
 
 
 @pytest.fixture(scope="function", name="create_synonym")

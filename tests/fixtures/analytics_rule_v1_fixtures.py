@@ -3,12 +3,12 @@
 import pytest
 import requests
 
-from typesense.analytics_rule_v1 import AnalyticsRuleV1
-from typesense.analytics_rules_v1 import AnalyticsRulesV1
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_analytics_rule_v1 import AsyncAnalyticsRuleV1
-from typesense.async_analytics_rules_v1 import AsyncAnalyticsRulesV1
+from typesense.sync.analytics_rule_v1 import AnalyticsRuleV1
+from typesense.sync.analytics_rules_v1 import AnalyticsRulesV1
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.analytics_rule_v1 import AsyncAnalyticsRuleV1
+from typesense.async_.analytics_rules_v1 import AsyncAnalyticsRulesV1
 
 
 @pytest.fixture(scope="function", name="delete_all_analytics_rules_v1")

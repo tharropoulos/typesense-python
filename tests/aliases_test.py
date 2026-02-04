@@ -5,10 +5,10 @@ from tests.utils.object_assertions import (
     assert_object_lists_match,
     assert_to_contain_object,
 )
-from typesense.aliases import Aliases
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_aliases import AsyncAliases
+from typesense.sync.aliases import Aliases
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.aliases import AsyncAliases
 
 
 def test_init(fake_api_call: ApiCall) -> None:

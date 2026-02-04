@@ -2,10 +2,10 @@
 
 import pytest
 
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_stemming import AsyncStemming
-from typesense.stemming import Stemming
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.stemming import AsyncStemming
+from typesense.sync.stemming import Stemming
 
 
 @pytest.fixture(scope="function", name="actual_stemming")

@@ -2,12 +2,12 @@
 
 import pytest
 from tests.utils.version import is_v30_or_above
-from typesense.client import Client
+from typesense.sync.client import Client
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
-from typesense.analytics import Analytics
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_analytics import AsyncAnalytics
+from typesense.sync.analytics import Analytics
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.analytics import AsyncAnalytics
 
 
 @pytest.mark.skipif(

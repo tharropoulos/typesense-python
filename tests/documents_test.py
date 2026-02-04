@@ -18,10 +18,10 @@ from tests.utils.object_assertions import (
     assert_object_lists_match,
     assert_to_contain_keys,
 )
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_documents import AsyncDocuments
-from typesense.documents import Documents
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.documents import AsyncDocuments
+from typesense.sync.documents import Documents
 from typesense.exceptions import InvalidParameter, TypesenseClientError
 
 

@@ -5,10 +5,10 @@ from tests.utils.object_assertions import (
     assert_match_object,
     assert_object_lists_match,
 )
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_metrics import AsyncMetrics
-from typesense.metrics import Metrics
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.metrics import AsyncMetrics
+from typesense.sync.metrics import Metrics
 
 
 def test_init(fake_api_call: ApiCall) -> None:

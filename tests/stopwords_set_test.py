@@ -1,11 +1,11 @@
 """Tests for the StopwordsSet class."""
 
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_stopwords import AsyncStopwords
-from typesense.stopwords import Stopwords
-from typesense.stopwords_set import StopwordsSet
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.stopwords import AsyncStopwords
+from typesense.sync.stopwords import Stopwords
+from typesense.sync.stopwords_set import StopwordsSet
 
 
 def test_init(fake_api_call: ApiCall) -> None:
@@ -54,7 +54,7 @@ def test_actual_delete(
 
 def test_init_async(fake_async_api_call: AsyncApiCall) -> None:
     """Test that the AsyncStopwordsSet object is initialized correctly."""
-    from typesense.async_stopwords_set import AsyncStopwordsSet
+    from typesense.async_.stopwords_set import AsyncStopwordsSet
 
     stopword_set = AsyncStopwordsSet(fake_async_api_call, "company_stopwords")
 

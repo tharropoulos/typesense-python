@@ -1,7 +1,7 @@
 """Tests for stemming."""
 
-from typesense.async_stemming import AsyncStemming
-from typesense.stemming import Stemming
+from typesense.async_.stemming import AsyncStemming
+from typesense.sync.stemming import Stemming
 
 
 def test_actual_upsert(

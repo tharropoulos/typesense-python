@@ -3,7 +3,7 @@
 
 import sys
 
-from typesense.async_api_call import AsyncApiCall
+from typesense.async_.api_call import AsyncApiCall
 
 
 if sys.version_info >= (3, 11):
@@ -12,9 +12,9 @@ else:
     import typing_extensions as typing
 
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
-from typesense.api_call import ApiCall
-from typesense.collections import Collections
-from typesense.async_collections import AsyncCollections
+from typesense.sync.api_call import ApiCall
+from typesense.sync.collections import Collections
+from typesense.async_.collections import AsyncCollections
 from typesense.types.collection import CollectionSchema
 
 

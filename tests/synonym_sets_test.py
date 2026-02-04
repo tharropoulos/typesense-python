@@ -8,11 +8,11 @@ from tests.utils.object_assertions import (
     assert_to_contain_object,
 )
 from tests.utils.version import is_v30_or_above
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_synonym_sets import AsyncSynonymSets
-from typesense.client import Client
-from typesense.synonym_sets import SynonymSets
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.synonym_sets import AsyncSynonymSets
+from typesense.sync.client import Client
+from typesense.sync.synonym_sets import SynonymSets
 
 pytestmark = pytest.mark.skipif(
     not is_v30_or_above(
@@ -89,7 +89,7 @@ def test_actual_retrieve(
 
 def test_init_async(fake_async_api_call: AsyncApiCall) -> None:
     """Test that the AsyncSynonymSets object is initialized correctly."""
-    from typesense.async_synonym_sets import AsyncSynonymSets
+    from typesense.async_.synonym_sets import AsyncSynonymSets
 
     synsets = AsyncSynonymSets(fake_async_api_call)
 

@@ -3,12 +3,12 @@
 import pytest
 import requests
 
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_curation_set import AsyncCurationSet
-from typesense.async_curation_sets import AsyncCurationSets
-from typesense.curation_set import CurationSet
-from typesense.curation_sets import CurationSets
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.curation_set import AsyncCurationSet
+from typesense.async_.curation_sets import AsyncCurationSets
+from typesense.sync.curation_set import CurationSet
+from typesense.sync.curation_sets import CurationSets
 
 
 @pytest.fixture(scope="function", name="create_curation_set")

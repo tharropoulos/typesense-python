@@ -8,14 +8,14 @@ from tests.utils.object_assertions import (
     assert_object_lists_match,
     assert_to_contain_object,
 )
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_collections import AsyncCollections
-from typesense.async_override import AsyncOverride
-from typesense.collections import Collections
-from typesense.override import Override
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.collections import AsyncCollections
+from typesense.async_.override import AsyncOverride
+from typesense.sync.collections import Collections
+from typesense.sync.override import Override
 from tests.utils.version import is_v30_or_above
-from typesense.client import Client
+from typesense.sync.client import Client
 
 
 pytestmark = pytest.mark.skipif(

@@ -2,8 +2,8 @@
 
 import pytest
 
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
 from typesense.configuration import Configuration
 
 

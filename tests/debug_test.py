@@ -1,10 +1,10 @@
 """Tests for the Debug class."""
 
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_debug import AsyncDebug
-from typesense.debug import Debug
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.debug import AsyncDebug
+from typesense.sync.debug import Debug
 
 
 def test_init(fake_api_call: ApiCall) -> None:

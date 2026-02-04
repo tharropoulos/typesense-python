@@ -4,11 +4,11 @@
 import pytest
 
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_operations import AsyncOperations
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.operations import AsyncOperations
 from typesense.exceptions import ObjectNotFound
-from typesense.operations import Operations
+from typesense.sync.operations import Operations
 
 
 def test_init(fake_api_call: ApiCall) -> None:

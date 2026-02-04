@@ -3,12 +3,12 @@
 import pytest
 import requests
 
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_collection import AsyncCollection
-from typesense.async_collections import AsyncCollections
-from typesense.collection import Collection
-from typesense.collections import Collections
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.collection import AsyncCollection
+from typesense.async_.collections import AsyncCollections
+from typesense.sync.collection import Collection
+from typesense.sync.collections import Collections
 
 
 @pytest.fixture(scope="function", name="delete_all")

@@ -12,10 +12,10 @@ from tests.utils.object_assertions import (
     assert_object_lists_match,
     assert_to_contain_object,
 )
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_keys import AsyncKeys
-from typesense.keys import Keys
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.keys import AsyncKeys
+from typesense.sync.keys import Keys
 
 
 def test_init(fake_api_call: ApiCall) -> None:

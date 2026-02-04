@@ -5,9 +5,9 @@ from tests.utils.object_assertions import (
     assert_object_lists_match,
     assert_to_contain_object,
 )
-from typesense.api_call import ApiCall
-from typesense.collection import Collection
-from typesense.collections import Collections
+from typesense.sync.api_call import ApiCall
+from typesense.sync.collection import Collection
+from typesense.sync.collections import Collections
 from typesense.types.collection import CollectionSchema
 
 

@@ -9,12 +9,12 @@ from tests.utils.object_assertions import (
     assert_object_lists_match,
     assert_to_contain_keys,
 )
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_conversation_model import AsyncConversationModel
-from typesense.async_conversations_models import AsyncConversationsModels
-from typesense.conversation_model import ConversationModel
-from typesense.conversations_models import ConversationsModels
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.conversation_model import AsyncConversationModel
+from typesense.async_.conversations_models import AsyncConversationsModels
+from typesense.sync.conversation_model import ConversationModel
+from typesense.sync.conversations_models import ConversationsModels
 
 load_dotenv()
 

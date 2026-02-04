@@ -2,10 +2,10 @@
 
 import pytest
 
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_debug import AsyncDebug
-from typesense.debug import Debug
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.debug import AsyncDebug
+from typesense.sync.debug import Debug
 
 
 @pytest.fixture(scope="function", name="actual_debug")

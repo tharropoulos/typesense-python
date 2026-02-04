@@ -2,7 +2,7 @@
 
 from tests.fixtures.document_fixtures import Companies
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
-from typesense.client import Client
+from typesense.sync.client import Client
 from typesense.configuration import ConfigDict
 
 

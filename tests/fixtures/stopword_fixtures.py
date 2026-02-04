@@ -3,12 +3,12 @@
 import pytest
 import requests
 
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_stopwords import AsyncStopwords
-from typesense.async_stopwords_set import AsyncStopwordsSet
-from typesense.stopwords import Stopwords
-from typesense.stopwords_set import StopwordsSet
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.stopwords import AsyncStopwords
+from typesense.async_.stopwords_set import AsyncStopwordsSet
+from typesense.sync.stopwords import Stopwords
+from typesense.sync.stopwords_set import StopwordsSet
 
 
 @pytest.fixture(scope="function", name="create_stopword")

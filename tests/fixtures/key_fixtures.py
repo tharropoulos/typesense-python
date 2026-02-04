@@ -3,12 +3,12 @@
 import pytest
 import requests
 
-from typesense.api_call import ApiCall
-from typesense.async_api_call import AsyncApiCall
-from typesense.async_key import AsyncKey
-from typesense.async_keys import AsyncKeys
-from typesense.key import Key
-from typesense.keys import Keys
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.key import AsyncKey
+from typesense.async_.keys import AsyncKeys
+from typesense.sync.key import Key
+from typesense.sync.keys import Keys
 
 
 @pytest.fixture(scope="function", name="delete_all_keys")
