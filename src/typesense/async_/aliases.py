@@ -70,7 +70,7 @@ class AsyncAliases:
         """
         if not self.aliases.get(name):
             self.aliases[name] = AsyncAlias(self.api_call, name)
-        return self.aliases.get(name)
+        return self.aliases[name]
 
     async def upsert(self, name: str, mapping: AliasCreateSchema) -> AliasSchema:
         """
