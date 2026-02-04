@@ -127,14 +127,14 @@ class AsyncDocuments(typing.Generic[TDoc]):
         """
         dirty_values_parameters = dirty_values_parameters or {}
         dirty_values_parameters["action"] = "create"
-        response: TDoc = await self.api_call.post(
+        response = await self.api_call.post(
             self._endpoint_path(),
             body=document,
             params=dirty_values_parameters,
             as_json=True,
             entity_type=typing.Dict[str, str],
         )
-        return response
+        return typing.cast(TDoc, response)
 
     async def create_many(
         self,
@@ -174,14 +174,14 @@ class AsyncDocuments(typing.Generic[TDoc]):
         """
         dirty_values_parameters = dirty_values_parameters or {}
         dirty_values_parameters["action"] = "upsert"
-        response: TDoc = await self.api_call.post(
+        response = await self.api_call.post(
             self._endpoint_path(),
             body=document,
             params=dirty_values_parameters,
             as_json=True,
             entity_type=typing.Dict[str, str],
         )
-        return response
+        return typing.cast(TDoc, response)
 
     async def update(
         self,

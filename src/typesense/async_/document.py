@@ -76,13 +76,13 @@ class AsyncDocument(typing.Generic[TDoc]):
         Returns:
             TDoc: The retrieved document.
         """
-        response: TDoc = await self.api_call.get(
+        response = await self.api_call.get(
             endpoint=self._endpoint_path,
             entity_type=typing.Dict[str, str],
             as_json=True,
             params=retrieve_parameters,
         )
-        return response
+        return typing.cast(TDoc, response)
 
     async def update(
         self,
@@ -122,12 +122,12 @@ class AsyncDocument(typing.Generic[TDoc]):
         Returns:
             TDoc: The deleted document.
         """
-        response: TDoc = await self.api_call.delete(
+        response = await self.api_call.delete(
             self._endpoint_path,
             entity_type=typing.Dict[str, str],
             params=delete_parameters,
         )
-        return response
+        return typing.cast(TDoc, response)
 
     @property
     def _endpoint_path(self) -> str:
