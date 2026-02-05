@@ -1,7 +1,5 @@
 """Unit Tests for the ApiCall class."""
 
-from __future__ import annotations
-
 import logging
 import sys
 import time
@@ -13,14 +11,14 @@ if sys.version_info >= (3, 11):
 else:
     import typing_extensions as typing
 
+import httpx
 import pytest
-import requests
-import requests_mock
+import respx
 from pytest_mock import MockerFixture
 
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
 from typesense import exceptions
-from typesense.api_call import ApiCall, RequestHandler
+from typesense.sync.api_call import ApiCall, RequestHandler
 from typesense.configuration import Configuration, Node
 from typesense.logger import logger
 
@@ -95,11 +93,11 @@ def test_get_exception() -> None:
 
 def test_get_error_message_with_invalid_json() -> None:
     """Test that it correctly handles invalid JSON in error responses."""
-    response = requests.Response()
-    response.headers["Content-Type"] = "application/json"
-    response.status_code = 400
-    # Set an invalid JSON string that would cause JSONDecodeError
-    response._content = b'{"message": "Error occurred", "details": {"key": "value"'
+    response = httpx.Response(
+        400,
+        headers={"Content-Type": "application/json"},
+        content=b'{"message": "Error occurred", "details": {"key": "value"',
+    )
 
     error_message = RequestHandler._get_error_message(response)
     assert "API error: Invalid JSON response:" in error_message
@@ -108,10 +106,11 @@ def test_get_error_message_with_invalid_json() -> None:
 
 def test_get_error_message_with_valid_json() -> None:
     """Test that it correctly extracts error message from valid JSON responses."""
-    response = requests.Response()
-    response.headers["Content-Type"] = "application/json"
-    response.status_code = 400
-    response._content = b'{"message": "Error occurred", "details": {"key": "value"}}'
+    response = httpx.Response(
+        400,
+        headers={"Content-Type": "application/json"},
+        content=b'{"message": "Error occurred", "details": {"key": "value"}}',
+    )
 
     error_message = RequestHandler._get_error_message(response)
     assert error_message == "Error occurred"
@@ -119,13 +118,14 @@ def test_get_error_message_with_valid_json() -> None:
 
 def test_get_error_message_with_non_json_content_type() -> None:
     """Test that it returns a default error message for non-JSON content types."""
-    response = requests.Response()
-    response.headers["Content-Type"] = "text/plain"
-    response.status_code = 400
-    response._content = b"Not a JSON content"
+    response = httpx.Response(
+        400,
+        headers={"Content-Type": "text/plain"},
+        content=b"Not a JSON content",
+    )
 
     error_message = RequestHandler._get_error_message(response)
-    assert error_message == "API error."
+    assert error_message == "API error. Not a JSON content"
 
 
 def test_normalize_params_with_booleans() -> None:
@@ -172,7 +172,6 @@ def test_normalize_params_with_no_booleans() -> None:
 
 def test_additional_headers(fake_api_call: ApiCall) -> None:
     """Test the `make_request` method with additional headers from the config."""
-    session = requests.sessions.Session()
     api_call = ApiCall(
         Configuration(
             {
@@ -188,38 +187,32 @@ def test_additional_headers(fake_api_call: ApiCall) -> None:
         ),
     )
 
-    with requests_mock.mock(session=session) as request_mocker:
-        request_mocker.get(
-            "http://nearest:8108/test",
-            json={"key": "value"},
-            status_code=200,
+    with respx.mock:
+        respx.get("http://nearest:8108/test").mock(
+            return_value=httpx.Response(200, json={"key": "value"})
         )
 
         api_call._execute_request(
-            session.get,
+            "GET",
             "/test",
             as_json=True,
             entity_type=typing.Dict[str, str],
         )
 
-        request = request_mocker.request_history[-1]
+        request = respx.calls.last.request
         assert request.headers["AdditionalHeader1"] == "test"
         assert request.headers["AdditionalHeader2"] == "test2"
 
 
 def test_make_request_as_json(fake_api_call: ApiCall) -> None:
     """Test the `make_request` method with JSON response."""
-    session = requests.sessions.Session()
-
-    with requests_mock.mock(session=session) as request_mocker:
-        request_mocker.get(
-            "http://nearest:8108/test",
-            json={"key": "value"},
-            status_code=200,
+    with respx.mock:
+        respx.get("http://nearest:8108/test").mock(
+            return_value=httpx.Response(200, json={"key": "value"})
         )
 
         response = fake_api_call._execute_request(
-            session.get,
+            "GET",
             "/test",
             as_json=True,
             entity_type=typing.Dict[str, str],
@@ -229,17 +222,13 @@ def test_make_request_as_json(fake_api_call: ApiCall) -> None:
 
 def test_make_request_as_text(fake_api_call: ApiCall) -> None:
     """Test the `make_request` method with text response."""
-    session = requests.sessions.Session()
-
-    with requests_mock.mock(session=session) as request_mocker:
-        request_mocker.get(
-            "http://nearest:8108/test",
-            text="response text",
-            status_code=200,
+    with respx.mock:
+        respx.get("http://nearest:8108/test").mock(
+            return_value=httpx.Response(200, text="response text")
         )
 
         response = fake_api_call._execute_request(
-            session.get,
+            "GET",
             "/test",
             as_json=False,
             entity_type=typing.Dict[str, str],
@@ -252,11 +241,9 @@ def test_get_as_json(
     fake_api_call: ApiCall,
 ) -> None:
     """Test the GET method with JSON response."""
-    with requests_mock.mock() as request_mocker:
-        request_mocker.get(
-            "http://nearest:8108/test",
-            json={"key": "value"},
-            status_code=200,
+    with respx.mock:
+        respx.get("http://nearest:8108/test").mock(
+            return_value=httpx.Response(200, json={"key": "value"})
         )
         assert fake_api_call.get(
             "/test",
@@ -269,11 +256,9 @@ def test_get_as_text(
     fake_api_call: ApiCall,
 ) -> None:
     """Test the GET method with text response."""
-    with requests_mock.mock() as request_mocker:
-        request_mocker.get(
-            "http://nearest:8108/test",
-            text="response text",
-            status_code=200,
+    with respx.mock:
+        respx.get("http://nearest:8108/test").mock(
+            return_value=httpx.Response(200, text="response text")
         )
         assert (
             fake_api_call.get("/test", as_json=False, entity_type=typing.Dict[str, str])
@@ -285,11 +270,9 @@ def test_post_as_json(
     fake_api_call: ApiCall,
 ) -> None:
     """Test the POST method with JSON response."""
-    with requests_mock.mock() as request_mocker:
-        request_mocker.post(
-            "http://nearest:8108/test",
-            json={"key": "value"},
-            status_code=200,
+    with respx.mock:
+        respx.post("http://nearest:8108/test").mock(
+            return_value=httpx.Response(200, json={"key": "value"})
         )
         assert fake_api_call.post(
             "/test",
@@ -305,11 +288,9 @@ def test_post_with_params(
     fake_api_call: ApiCall,
 ) -> None:
     """Test that the parameters are correctly passed to the request."""
-    with requests_mock.Mocker() as request_mocker:
-        request_mocker.post(
-            "http://nearest:8108/test",
-            json={"key": "value"},
-            status_code=200,
+    with respx.mock:
+        route = respx.post("http://nearest:8108/test").mock(
+            return_value=httpx.Response(200, json={"key": "value"})
         )
 
         parameter_set = {"key1": [True, False], "key2": False, "key3": "value"}
@@ -328,9 +309,15 @@ def test_post_with_params(
             "key3": ["value"],
         }
 
-        request = request_mocker.request_history[0]
-
-        assert request.qs == expected_parameter_set
+        request = route.calls.last.request
+        # respx stores params as a MultiDict, convert to dict for comparison
+        params_dict: typing.Dict[str, typing.List[str]] = {}
+        for key, value in request.url.params.multi_items():
+            if key in params_dict:
+                params_dict[key].append(value)
+            else:
+                params_dict[key] = [value]
+        assert params_dict == expected_parameter_set
         assert post_result == {"key": "value"}
 
 
@@ -338,11 +325,9 @@ def test_post_as_text(
     fake_api_call: ApiCall,
 ) -> None:
     """Test the POST method with text response."""
-    with requests_mock.mock() as request_mocker:
-        request_mocker.post(
-            "http://nearest:8108/test",
-            text="response text",
-            status_code=200,
+    with respx.mock:
+        respx.post("http://nearest:8108/test").mock(
+            return_value=httpx.Response(200, text="response text")
         )
         post_result = fake_api_call.post(
             "/test",
@@ -357,11 +342,9 @@ def test_put_as_json(
     fake_api_call: ApiCall,
 ) -> None:
     """Test the PUT method with JSON response."""
-    with requests_mock.mock() as request_mocker:
-        request_mocker.put(
-            "http://nearest:8108/test",
-            json={"key": "value"},
-            status_code=200,
+    with respx.mock:
+        respx.put("http://nearest:8108/test").mock(
+            return_value=httpx.Response(200, json={"key": "value"})
         )
         assert fake_api_call.put(
             "/test",
@@ -374,11 +357,9 @@ def test_patch_as_json(
     fake_api_call: ApiCall,
 ) -> None:
     """Test the PATCH method with JSON response."""
-    with requests_mock.mock() as request_mocker:
-        request_mocker.patch(
-            "http://nearest:8108/test",
-            json={"key": "value"},
-            status_code=200,
+    with respx.mock:
+        respx.patch("http://nearest:8108/test").mock(
+            return_value=httpx.Response(200, json={"key": "value"})
         )
         assert fake_api_call.patch(
             "/test",
@@ -391,11 +372,9 @@ def test_delete_as_json(
     fake_api_call: ApiCall,
 ) -> None:
     """Test the DELETE method with JSON response."""
-    with requests_mock.mock() as request_mocker:
-        request_mocker.delete(
-            "http://nearest:8108/test",
-            json={"key": "value"},
-            status_code=200,
+    with respx.mock:
+        respx.delete("http://nearest:8108/test").mock(
+            return_value=httpx.Response(200, json={"key": "value"})
         )
 
         response = fake_api_call.delete("/test", entity_type=typing.Dict[str, str])
@@ -406,63 +385,66 @@ def test_raise_custom_exception_with_header(
     fake_api_call: ApiCall,
 ) -> None:
     """Test that it raises a custom exception with the error message."""
-    with requests_mock.mock() as request_mocker:
-        request_mocker.get(
-            "http://nearest:8108/test",
-            json={"message": "Test error"},
-            status_code=400,
-            headers={"Content-Type": "application/json"},
+    with respx.mock:
+        respx.get("http://nearest:8108/test").mock(
+            return_value=httpx.Response(
+                400,
+                json={"message": "Test error"},
+                headers={"Content-Type": "application/json"},
+            )
         )
 
         with pytest.raises(exceptions.RequestMalformed) as exception:
             fake_api_call._execute_request(
-                requests.get,
+                "GET",
                 "/test",
                 as_json=True,
                 entity_type=typing.Dict[str, str],
             )
-            assert str(exception.value) == "[Errno 400] Test error"
+        assert str(exception.value) == "[Errno 400] Test error"
 
 
 def test_raise_custom_exception_without_header(
     fake_api_call: ApiCall,
 ) -> None:
     """Test that it raises a custom exception with the error message."""
-    with requests_mock.mock() as request_mocker:
-        request_mocker.get(
-            "http://nearest:8108/test",
-            json={"message": "Test error"},
-            status_code=400,
+    with respx.mock:
+        # Use content instead of json to avoid automatic Content-Type header
+        # This tests the case where Content-Type is not application/json
+        respx.get("http://nearest:8108/test").mock(
+            return_value=httpx.Response(
+                400,
+                content=b'{"message": "Test error"}',
+                headers={"Content-Type": "text/plain"},
+            )
         )
 
         with pytest.raises(exceptions.RequestMalformed) as exception:
             fake_api_call._execute_request(
-                requests.get,
+                "GET",
                 "/test",
                 as_json=True,
                 entity_type=typing.Dict[str, str],
             )
-            assert str(exception.value) == "[Errno 400] API error."
+        assert (
+            str(exception.value) == '[Errno 400] API error. {"message": "Test error"}'
+        )
 
 
 def test_selects_next_available_node_on_timeout(
     fake_api_call: ApiCall,
 ) -> None:
     """Test that it selects the next available node if the request times out."""
-    with requests_mock.mock() as request_mocker:
+    with respx.mock:
         fake_api_call.config.nearest_node = None
-        request_mocker.get(
-            "http://node0:8108/test",
-            exc=requests.exceptions.ConnectTimeout,
+        respx.get("http://node0:8108/test").mock(
+            side_effect=httpx.ConnectTimeout("Timeout")
         )
-        request_mocker.get(
-            "http://node1:8108/test",
-            exc=requests.exceptions.ConnectTimeout,
+        respx.get("http://node1:8108/test").mock(
+            side_effect=httpx.ConnectTimeout("Timeout")
         )
-        request_mocker.get(
-            "http://node2:8108/test",
-            json={"key": "value"},
-            status_code=200,
+        respx.get("http://node2:8108/test").mock(
+            return_value=httpx.Response(200, json={"key": "value"})
         )
 
         response = fake_api_call.get(
@@ -472,10 +454,10 @@ def test_selects_next_available_node_on_timeout(
         )
 
         assert response == {"key": "value"}
-        assert request_mocker.request_history[0].url == "http://node0:8108/test"
-        assert request_mocker.request_history[1].url == "http://node1:8108/test"
-        assert request_mocker.request_history[2].url == "http://node2:8108/test"
-        assert request_mocker.call_count == 3
+        assert respx.calls[0].request.url == "http://node0:8108/test"
+        assert respx.calls[1].request.url == "http://node1:8108/test"
+        assert respx.calls[2].request.url == "http://node2:8108/test"
+        assert len(respx.calls) == 3
 
 
 def test_get_node_no_healthy_nodes(
@@ -515,16 +497,21 @@ def test_raises_if_no_nodes_are_healthy_with_the_last_exception(
     fake_api_call: ApiCall,
 ) -> None:
     """Test that it raises the last exception if no nodes are healthy."""
-    with requests_mock.mock() as request_mocker:
-        request_mocker.get(
-            "http://nearest:8108/",
-            exc=requests.exceptions.ConnectTimeout,
+    with respx.mock:
+        respx.get("http://nearest:8108/").mock(
+            side_effect=httpx.ConnectTimeout("Timeout")
         )
-        request_mocker.get("http://node0:8108/", exc=requests.exceptions.ConnectTimeout)
-        request_mocker.get("http://node1:8108/", exc=requests.exceptions.ConnectTimeout)
-        request_mocker.get("http://node2:8108/", exc=requests.exceptions.SSLError)
+        respx.get("http://node0:8108/").mock(
+            side_effect=httpx.ConnectTimeout("Timeout")
+        )
+        respx.get("http://node1:8108/").mock(
+            side_effect=httpx.ConnectTimeout("Timeout")
+        )
+        respx.get("http://node2:8108/").mock(
+            side_effect=httpx.ConnectError("SSL Error")
+        )
 
-        with pytest.raises(requests.exceptions.SSLError):
+        with pytest.raises(httpx.ConnectError):
             fake_api_call.get("/", entity_type=typing.Dict[str, str])
 
 
@@ -533,17 +520,17 @@ def test_uses_nearest_node_if_present_and_healthy(  # noqa: WPS213
     fake_api_call: ApiCall,
 ) -> None:
     """Test that it uses the nearest node if it is present and healthy."""
-    with requests_mock.Mocker() as request_mocker:
-        request_mocker.get(
-            "http://nearest:8108/",
-            exc=requests.exceptions.ConnectTimeout,
+    with respx.mock:
+        nearest_route = respx.get("http://nearest:8108/")
+        nearest_route.mock(side_effect=httpx.ConnectTimeout("Timeout"))
+        respx.get("http://node0:8108/").mock(
+            side_effect=httpx.ConnectTimeout("Timeout")
         )
-        request_mocker.get("http://node0:8108/", exc=requests.exceptions.ConnectTimeout)
-        request_mocker.get("http://node1:8108/", exc=requests.exceptions.ConnectTimeout)
-        request_mocker.get(
-            "http://node2:8108/",
-            json={"message": "Success"},
-            status_code=200,
+        respx.get("http://node1:8108/").mock(
+            side_effect=httpx.ConnectTimeout("Timeout")
+        )
+        respx.get("http://node2:8108/").mock(
+            return_value=httpx.Response(200, json={"message": "Success"})
         )
 
         # Freeze time
@@ -582,10 +569,8 @@ def test_uses_nearest_node_if_present_and_healthy(  # noqa: WPS213
         mocker.patch("time.time", return_value=current_time + 185)
 
         # Resolve the request on the nearest node
-        request_mocker.get(
-            "http://nearest:8108/",
-            json={"message": "Success"},
-            status_code=200,
+        nearest_route.mock(
+            return_value=httpx.Response(200, json={"message": "Success"})
         )
 
         # 1 should go to nearest and resolve the request: 1 request
@@ -596,24 +581,24 @@ def test_uses_nearest_node_if_present_and_healthy(  # noqa: WPS213
         fake_api_call.get("/", entity_type=typing.Dict[str, str])
 
         # Check the request history
-        assert request_mocker.request_history[0].url == "http://nearest:8108/"
-        assert request_mocker.request_history[1].url == "http://node0:8108/"
-        assert request_mocker.request_history[2].url == "http://node1:8108/"
-        assert request_mocker.request_history[3].url == "http://node2:8108/"
+        assert str(respx.calls[0].request.url) == "http://nearest:8108/"
+        assert str(respx.calls[1].request.url) == "http://node0:8108/"
+        assert str(respx.calls[2].request.url) == "http://node1:8108/"
+        assert str(respx.calls[3].request.url) == "http://node2:8108/"
 
-        assert request_mocker.request_history[4].url == "http://node2:8108/"
-        assert request_mocker.request_history[5].url == "http://node2:8108/"
+        assert str(respx.calls[4].request.url) == "http://node2:8108/"
+        assert str(respx.calls[5].request.url) == "http://node2:8108/"
 
-        assert request_mocker.request_history[6].url == "http://node2:8108/"
+        assert str(respx.calls[6].request.url) == "http://node2:8108/"
 
-        assert request_mocker.request_history[7].url == "http://nearest:8108/"
-        assert request_mocker.request_history[8].url == "http://node0:8108/"
-        assert request_mocker.request_history[9].url == "http://node1:8108/"
-        assert request_mocker.request_history[10].url == "http://node2:8108/"
+        assert str(respx.calls[7].request.url) == "http://nearest:8108/"
+        assert str(respx.calls[8].request.url) == "http://node0:8108/"
+        assert str(respx.calls[9].request.url) == "http://node1:8108/"
+        assert str(respx.calls[10].request.url) == "http://node2:8108/"
 
-        assert request_mocker.request_history[11].url == "http://nearest:8108/"
-        assert request_mocker.request_history[12].url == "http://nearest:8108/"
-        assert request_mocker.request_history[13].url == "http://nearest:8108/"
+        assert str(respx.calls[11].request.url) == "http://nearest:8108/"
+        assert str(respx.calls[12].request.url) == "http://nearest:8108/"
+        assert str(respx.calls[13].request.url) == "http://nearest:8108/"
 
 
 def test_max_retries_no_last_exception(fake_api_call: ApiCall) -> None:
@@ -623,7 +608,7 @@ def test_max_retries_no_last_exception(fake_api_call: ApiCall) -> None:
         match="All nodes are unhealthy",
     ):
         fake_api_call._execute_request(
-            requests.get,
+            "GET",
             "/",
             as_json=True,
             entity_type=typing.Dict[str, str],

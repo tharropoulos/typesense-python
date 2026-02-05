@@ -2,7 +2,8 @@
 
 import pytest
 
-from typesense.api_call import ApiCall
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
 from typesense.configuration import Configuration
 
 
@@ -18,3 +19,18 @@ def fake_api_call_fixture(
 def actual_api_call_fixture(actual_config: Configuration) -> ApiCall:
     """Return an ApiCall object using a real API."""
     return ApiCall(actual_config)
+
+
+@pytest.fixture(scope="function", name="actual_async_api_call")
+def actual_async_api_call_fixture(actual_config: Configuration) -> AsyncApiCall:
+    """Return an AsyncApiCall object using a real API."""
+    return AsyncApiCall(actual_config)
+
+
+@pytest.fixture(scope="function", name="fake_async_api_call")
+def fake_api_call_async_fixture(
+    fake_config: Configuration,
+) -> AsyncApiCall:
+    """Return an ApiCall object with test values."""
+    return AsyncApiCall(fake_config)
+

@@ -1,6 +1,5 @@
 """Tests for the NLSearchModels class."""
 
-from __future__ import annotations
 
 import os
 import sys
@@ -18,8 +17,10 @@ from tests.utils.object_assertions import (
     assert_to_contain_keys,
     assert_to_contain_object,
 )
-from typesense.api_call import ApiCall
-from typesense.nl_search_models import NLSearchModels
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.nl_search_models import AsyncNLSearchModels
+from typesense.sync.nl_search_models import NLSearchModels
 
 
 def test_init(fake_api_call: ApiCall) -> None:
@@ -34,6 +35,23 @@ def test_init(fake_api_call: ApiCall) -> None:
     assert_match_object(
         nl_search_models.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,
+    )
+
+    assert not nl_search_models.nl_search_models
+
+
+def test_init_async(fake_async_api_call: AsyncApiCall) -> None:
+    """Test that the AsyncNLSearchModels object is initialized correctly."""
+    nl_search_models = AsyncNLSearchModels(fake_async_api_call)
+
+    assert_match_object(nl_search_models.api_call, fake_async_api_call)
+    assert_object_lists_match(
+        nl_search_models.api_call.node_manager.nodes,
+        fake_async_api_call.node_manager.nodes,
+    )
+    assert_match_object(
+        nl_search_models.api_call.config.nearest_node,
+        fake_async_api_call.config.nearest_node,
     )
 
     assert not nl_search_models.nl_search_models
@@ -63,6 +81,30 @@ def test_get_missing_nl_search_model(
     )
 
 
+def test_get_missing_nl_search_model_async(
+    fake_async_nl_search_models: AsyncNLSearchModels,
+) -> None:
+    """Test that the AsyncNLSearchModels object can get a missing nl_search_model."""
+    nl_search_model = fake_async_nl_search_models["nl_search_model_id"]
+
+    assert_match_object(
+        nl_search_model.api_call,
+        fake_async_nl_search_models.api_call,
+    )
+    assert_object_lists_match(
+        nl_search_model.api_call.node_manager.nodes,
+        fake_async_nl_search_models.api_call.node_manager.nodes,
+    )
+    assert_match_object(
+        nl_search_model.api_call.config.nearest_node,
+        fake_async_nl_search_models.api_call.config.nearest_node,
+    )
+    assert (
+        nl_search_model._endpoint_path  # noqa: WPS437
+        == "/nl_search_models/nl_search_model_id"
+    )
+
+
 def test_get_existing_nl_search_model(
     fake_nl_search_models: NLSearchModels,
 ) -> None:
@@ -71,6 +113,18 @@ def test_get_existing_nl_search_model(
     fetched_nl_search_model = fake_nl_search_models["nl_search_model_id"]
 
     assert len(fake_nl_search_models.nl_search_models) == 1
+
+    assert nl_search_model is fetched_nl_search_model
+
+
+def test_get_existing_nl_search_model_async(
+    fake_async_nl_search_models: AsyncNLSearchModels,
+) -> None:
+    """Test that the AsyncNLSearchModels object can get an existing nl_search_model."""
+    nl_search_model = fake_async_nl_search_models["nl_search_model_id"]
+    fetched_nl_search_model = fake_async_nl_search_models["nl_search_model_id"]
+
+    assert len(fake_async_nl_search_models.nl_search_models) == 1
 
     assert nl_search_model is fetched_nl_search_model
 
@@ -103,6 +157,47 @@ def test_actual_retrieve(
 ) -> None:
     """Test that it can retrieve NL search models from Typesense Server."""
     response = actual_nl_search_models.retrieve()
+    assert len(response) == 1
+    assert_to_contain_object(
+        response[0],
+        {
+            "id": create_nl_search_model,
+        },
+    )
+    assert_to_contain_keys(
+        response[0],
+        ["id", "api_key", "max_bytes", "model_name", "system_prompt"],
+    )
+
+
+@pytest.mark.open_ai
+async def test_actual_create_async(
+    actual_async_nl_search_models: AsyncNLSearchModels,
+) -> None:
+    """Test that it can create an NL search model on Typesense Server."""
+    response = await actual_async_nl_search_models.create(
+        {
+            "api_key": os.environ.get("OPEN_AI_KEY", "test-api-key"),
+            "max_bytes": 16384,
+            "model_name": "openai/gpt-3.5-turbo",
+            "system_prompt": "This is meant for testing purposes",
+        },
+    )
+
+    assert_to_contain_keys(
+        response,
+        ["id", "api_key", "max_bytes", "model_name", "system_prompt"],
+    )
+
+
+@pytest.mark.open_ai
+async def test_actual_retrieve_async(
+    actual_async_nl_search_models: AsyncNLSearchModels,
+    delete_all_nl_search_models: None,
+    create_nl_search_model: str,
+) -> None:
+    """Test that it can retrieve NL search models from Typesense Server."""
+    response = await actual_async_nl_search_models.retrieve()
     assert len(response) == 1
     assert_to_contain_object(
         response[0],

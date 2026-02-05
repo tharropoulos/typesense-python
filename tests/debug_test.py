@@ -1,13 +1,10 @@
 """Tests for the Debug class."""
 
-from __future__ import annotations
-
-import requests_mock
-
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
-from typesense.api_call import ApiCall
-from typesense.debug import Debug
-from typesense.types.debug import DebugResponseSchema
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.debug import AsyncDebug
+from typesense.sync.debug import Debug
 
 
 def test_init(fake_api_call: ApiCall) -> None:
@@ -28,27 +25,36 @@ def test_init(fake_api_call: ApiCall) -> None:
     assert debug.resource_path == "/debug"  # noqa: WPS437
 
 
-def test_retrieve(fake_debug: Debug) -> None:
-    """Test that the Debug object can retrieve a debug."""
-    json_response: DebugResponseSchema = {"state": 1, "version": "27.1"}
+def test_init_async(fake_async_api_call: AsyncApiCall) -> None:
+    """Test that the AsyncDebug object is initialized correctly."""
+    debug = AsyncDebug(fake_async_api_call)
 
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "/debug",
-            json=json_response,
-        )
-
-        response = fake_debug.retrieve()
-
-        assert len(mock.request_history) == 1
-        assert mock.request_history[0].method == "GET"
-        assert mock.request_history[0].url == "http://nearest:8108/debug"
-        assert response == json_response
+    assert_match_object(debug.api_call, fake_async_api_call)
+    assert_object_lists_match(
+        debug.api_call.node_manager.nodes,
+        fake_async_api_call.node_manager.nodes,
+    )
+    assert_match_object(
+        debug.api_call.config.nearest_node,
+        fake_async_api_call.config.nearest_node,
+    )
+    assert debug.resource_path == "/debug"  # noqa: WPS437
 
 
 def test_actual_retrieve(actual_debug: Debug) -> None:
     """Test that the Debug object can retrieve a debug on Typesense server and verify response structure."""
     response = actual_debug.retrieve()
+
+    assert "state" in response
+    assert "version" in response
+
+    assert isinstance(response["state"], int)
+    assert isinstance(response["version"], str)
+
+
+async def test_actual_retrieve_async(actual_async_debug: AsyncDebug) -> None:
+    """Test that the AsyncDebug object can retrieve a debug on Typesense server and verify response structure."""
+    response = await actual_async_debug.retrieve()
 
     assert "state" in response
     assert "version" in response

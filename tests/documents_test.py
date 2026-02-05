@@ -18,8 +18,10 @@ from tests.utils.object_assertions import (
     assert_object_lists_match,
     assert_to_contain_keys,
 )
-from typesense.api_call import ApiCall
-from typesense.documents import Documents
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.documents import AsyncDocuments
+from typesense.sync.documents import Documents
 from typesense.exceptions import InvalidParameter, TypesenseClientError
 
 
@@ -35,6 +37,23 @@ def test_init(fake_api_call: ApiCall) -> None:
     assert_match_object(
         documents.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,
+    )
+
+    assert not documents.documents
+
+
+def test_init_async(fake_async_api_call: AsyncApiCall) -> None:
+    """Test that the AsyncDocuments object is initialized correctly."""
+    documents = AsyncDocuments(fake_async_api_call, "companies")
+
+    assert_match_object(documents.api_call, fake_async_api_call)
+    assert_object_lists_match(
+        documents.api_call.node_manager.nodes,
+        fake_async_api_call.node_manager.nodes,
+    )
+    assert_match_object(
+        documents.api_call.config.nearest_node,
+        fake_async_api_call.config.nearest_node,
     )
 
     assert not documents.documents
@@ -57,6 +76,24 @@ def test_get_missing_document(fake_documents: Documents) -> None:
     )
 
 
+def test_get_missing_document_async(fake_async_documents: AsyncDocuments) -> None:
+    """Test that the AsyncDocuments object can get a missing document."""
+    document = fake_async_documents["1"]
+
+    assert_match_object(document.api_call, fake_async_documents.api_call)
+    assert_object_lists_match(
+        document.api_call.node_manager.nodes,
+        fake_async_documents.api_call.node_manager.nodes,
+    )
+    assert_match_object(
+        document.api_call.config.nearest_node,
+        fake_async_documents.api_call.config.nearest_node,
+    )
+    assert (
+        document._endpoint_path == "/collections/companies/documents/1"  # noqa: WPS437
+    )
+
+
 def test_get_existing_document(fake_documents: Documents) -> None:
     """Test that the Documents object can get an existing document."""
     document = fake_documents["1"]
@@ -65,32 +102,6 @@ def test_get_existing_document(fake_documents: Documents) -> None:
     assert len(fake_documents.documents) == 1
 
     assert document is fetched_document
-
-
-def test_create(
-    actual_documents: Documents[Companies],
-    actual_api_call: ApiCall,
-    delete_all: None,
-    create_collection: None,
-    mocker: MockFixture,
-) -> None:
-    """Test that the Documents object can create a document on Typesense server."""
-    company: Companies = {
-        "company_name": "Typesense",
-        "id": "1",
-        "num_employees": 25,
-    }
-    spy = mocker.spy(actual_api_call, "post")
-    response = actual_documents.create(company)
-    expected = company
-    assert response == expected
-    spy.assert_called_once_with(
-        "/collections/companies/documents/",
-        body=company,
-        params={"action": "create"},
-        as_json=True,
-        entity_type=typing.Dict[str, str],
-    )
 
 
 def test_upsert(
@@ -203,6 +214,17 @@ def test_delete(
 ) -> None:
     """Test that the Documents object can delete a document from Typesense server."""
     response = actual_documents.delete({"filter_by": "company_name:Company"})
+    assert response == {"num_deleted": 1}
+
+
+def test_truncate(
+    actual_documents: Documents[Companies],
+    delete_all: None,
+    create_collection: None,
+    create_document: None,
+) -> None:
+    """Test that the Documents object can delete a document from Typesense server."""
+    response = actual_documents.delete({"truncate": True})
     assert response == {"num_deleted": 1}
 
 
@@ -484,3 +506,75 @@ def test_search_invalid_parameters(
                 "invalid": Companies(company_name="", id="", num_employees=0),
             },
         )
+
+
+async def test_upsert_async(
+    actual_async_documents: AsyncDocuments[Companies],
+    delete_all: None,
+    create_collection: None,
+) -> None:
+    """Test that the AsyncDocuments object can upsert a document on Typesense server."""
+    company: Companies = {
+        "company_name": "company",
+        "id": "0",
+        "num_employees": 10,
+    }
+    response = await actual_async_documents.upsert(company)
+
+    assert response == company
+
+
+async def test_export_async(
+    actual_async_documents: AsyncDocuments[Companies],
+    delete_all: None,
+    create_collection: None,
+    create_document: None,
+) -> None:
+    """Test that the AsyncDocuments object can export a document from Typesense server."""
+    response = await actual_async_documents.export()
+    assert response == '{"company_name":"Company","id":"0","num_employees":10}'
+
+
+async def test_delete_async(
+    actual_async_documents: AsyncDocuments[Companies],
+    delete_all: None,
+    create_collection: None,
+    create_document: None,
+) -> None:
+    """Test that the AsyncDocuments object can delete a document from Typesense server."""
+    response = await actual_async_documents.delete({"filter_by": "company_name:Company"})
+    assert response == {"num_deleted": 1}
+
+
+async def test_search_async(
+    actual_async_documents: AsyncDocuments[Companies],
+    delete_all: None,
+    create_collection: None,
+    create_document: None,
+) -> None:
+    """Test that the AsyncDocuments object can search for documents on Typesense server."""
+    response = await actual_async_documents.search(
+        {
+            "q": "com",
+            "query_by": "company_name",
+        },
+    )
+
+    assert_to_contain_keys(
+        response,
+        [
+            "facet_counts",
+            "found",
+            "hits",
+            "page",
+            "out_of",
+            "request_params",
+            "search_time_ms",
+            "search_cutoff",
+        ],
+    )
+
+    assert_to_contain_keys(
+        response.get("hits")[0],
+        ["document", "highlights", "highlight", "text_match", "text_match_info"],
+    )

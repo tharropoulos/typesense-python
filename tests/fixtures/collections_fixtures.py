@@ -3,9 +3,12 @@
 import pytest
 import requests
 
-from typesense.api_call import ApiCall
-from typesense.collection import Collection
-from typesense.collections import Collections
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.collection import AsyncCollection
+from typesense.async_.collections import AsyncCollections
+from typesense.sync.collection import Collection
+from typesense.sync.collections import Collections
 
 
 @pytest.fixture(scope="function", name="delete_all")
@@ -81,13 +84,35 @@ def actual_collections_fixture(actual_api_call: ApiCall) -> Collections:
     return Collections(actual_api_call)
 
 
+@pytest.fixture(scope="function", name="actual_async_collections")
+def actual_async_collections_fixture(
+    actual_async_api_call: AsyncApiCall,
+) -> AsyncCollections:
+    """Return a Collections object using a real API."""
+    return AsyncCollections(actual_async_api_call)
+
+
 @pytest.fixture(scope="function", name="fake_collections")
 def fake_collections_fixture(fake_api_call: ApiCall) -> Collections:
     """Return a Collections object with test values."""
     return Collections(fake_api_call)
 
 
+@pytest.fixture(scope="function", name="fake_async_collections")
+def fake_collections_async_fixture(
+    fake_async_api_call: AsyncApiCall,
+) -> AsyncCollections:
+    """Return a Collections object with test values."""
+    return AsyncCollections(fake_async_api_call)
+
+
 @pytest.fixture(scope="function", name="fake_collection")
 def fake_collection_fixture(fake_api_call: ApiCall) -> Collection:
     """Return a Collection object with test values."""
     return Collection(fake_api_call, "companies")
+
+
+@pytest.fixture(scope="function", name="fake_async_collection")
+def fake_async_collection_fixture(fake_async_api_call: AsyncApiCall) -> AsyncCollection:
+    """Return a Collection object with test values."""
+    return AsyncCollection(fake_async_api_call, "companies")

@@ -1,8 +1,6 @@
 """Tests for the Overrides class."""
 
-from __future__ import annotations
 
-import requests_mock
 import pytest
 
 from tests.utils.object_assertions import (
@@ -10,11 +8,13 @@ from tests.utils.object_assertions import (
     assert_object_lists_match,
     assert_to_contain_object,
 )
-from typesense.api_call import ApiCall
-from typesense.collections import Collections
-from typesense.overrides import OverrideRetrieveSchema, Overrides, OverrideSchema
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.collections import AsyncCollections
+from typesense.sync.collections import Collections
+from typesense.sync.overrides import Overrides
 from tests.utils.version import is_v30_or_above
-from typesense.client import Client
+from typesense.sync.client import Client
 
 pytestmark = pytest.mark.skipif(
     is_v30_or_above(
@@ -74,62 +74,6 @@ def test_get_existing_override(fake_overrides: Overrides) -> None:
     assert len(fake_overrides.overrides) == 1
 
     assert override is fetched_override
-
-
-def test_retrieve(fake_overrides: Overrides) -> None:
-    """Test that the Overrides object can retrieve overrides."""
-    json_response: OverrideRetrieveSchema = {
-        "overrides": [
-            {
-                "id": "company_override",
-                "rule": {"match": "exact", "query": "companies"},
-            },
-        ],
-    }
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "http://nearest:8108/collections/companies/overrides/",
-            json=json_response,
-        )
-
-        response = fake_overrides.retrieve()
-
-    assert len(response) == 1
-    assert response["overrides"][0] == {
-        "id": "company_override",
-        "rule": {"match": "exact", "query": "companies"},
-    }
-    assert response == json_response
-
-
-def test_create(fake_overrides: Overrides) -> None:
-    """Test that the Overrides object can create a override."""
-    json_response: OverrideSchema = {
-        "id": "company_override",
-        "rule": {"match": "exact", "query": "companies"},
-    }
-
-    with requests_mock.Mocker() as mock:
-        mock.put(
-            "http://nearest:8108/collections/companies/overrides/company_override",
-            json=json_response,
-        )
-
-        fake_overrides.upsert(
-            "company_override",
-            {"rule": {"match": "exact", "query": "companies"}},
-        )
-
-        assert mock.call_count == 1
-        assert mock.called is True
-        assert mock.last_request.method == "PUT"
-        assert (
-            mock.last_request.url
-            == "http://nearest:8108/collections/companies/overrides/company_override"
-        )
-        assert mock.last_request.json() == {
-            "rule": {"match": "exact", "query": "companies"},
-        }
 
 
 def test_actual_create(
@@ -195,6 +139,131 @@ def test_actual_retrieve(
 ) -> None:
     """Test that the Overrides object can retrieve an override from Typesense Server."""
     response = actual_collections["companies"].overrides.retrieve()
+
+    assert len(response["overrides"]) == 1
+    assert_to_contain_object(
+        response["overrides"][0],
+        {
+            "id": "company_override",
+            "rule": {"match": "exact", "query": "companies"},
+            "filter_by": "num_employees>10",
+        },
+    )
+
+
+def test_init_async(fake_async_api_call: AsyncApiCall) -> None:
+    """Test that the AsyncOverrides object is initialized correctly."""
+    from typesense.async_.overrides import AsyncOverrides
+
+    overrides = AsyncOverrides(fake_async_api_call, "companies")
+
+    assert_match_object(overrides.api_call, fake_async_api_call)
+    assert_object_lists_match(
+        overrides.api_call.node_manager.nodes,
+        fake_async_api_call.node_manager.nodes,
+    )
+    assert_match_object(
+        overrides.api_call.config.nearest_node,
+        fake_async_api_call.config.nearest_node,
+    )
+
+    assert not overrides.overrides
+
+
+def test_get_missing_override_async(fake_async_overrides) -> None:
+    """Test that the AsyncOverrides object can get a missing override."""
+
+    override = fake_async_overrides["company_override"]
+
+    assert override.override_id == "company_override"
+    assert_match_object(override.api_call, fake_async_overrides.api_call)
+    assert_object_lists_match(
+        override.api_call.node_manager.nodes, fake_async_overrides.api_call.node_manager.nodes
+    )
+    assert_match_object(
+        override.api_call.config.nearest_node,
+        fake_async_overrides.api_call.config.nearest_node,
+    )
+    assert override.collection_name == "companies"
+    assert (
+        override._endpoint_path()  # noqa: WPS437
+        == "/collections/companies/overrides/company_override"
+    )
+
+
+def test_get_existing_override_async(fake_async_overrides) -> None:
+    """Test that the AsyncOverrides object can get an existing override."""
+    override = fake_async_overrides["companies"]
+    fetched_override = fake_async_overrides["companies"]
+
+    assert len(fake_async_overrides.overrides) == 1
+
+    assert override is fetched_override
+
+
+async def test_actual_create_async(
+    actual_async_overrides,
+    delete_all: None,
+    create_collection: None,
+) -> None:
+    """Test that the AsyncOverrides object can create an override on Typesense Server."""
+    response = await actual_async_overrides.upsert(
+        "company_override",
+        {
+            "rule": {"match": "exact", "query": "companies"},
+            "filter_by": "num_employees>10",
+        },
+    )
+
+    assert response == {
+        "id": "company_override",
+        "rule": {"match": "exact", "query": "companies"},
+        "filter_by": "num_employees>10",
+    }
+
+
+async def test_actual_update_async(
+    actual_async_overrides,
+    delete_all: None,
+    create_collection: None,
+) -> None:
+    """Test that the AsyncOverrides object can update an override on Typesense Server."""
+    create_response = await actual_async_overrides.upsert(
+        "company_override",
+        {
+            "rule": {"match": "exact", "query": "companies"},
+            "filter_by": "num_employees>10",
+        },
+    )
+
+    assert create_response == {
+        "id": "company_override",
+        "rule": {"match": "exact", "query": "companies"},
+        "filter_by": "num_employees>10",
+    }
+
+    update_response = await actual_async_overrides.upsert(
+        "company_override",
+        {
+            "rule": {"match": "contains", "query": "companies"},
+            "filter_by": "num_employees>20",
+        },
+    )
+
+    assert update_response == {
+        "id": "company_override",
+        "rule": {"match": "contains", "query": "companies"},
+        "filter_by": "num_employees>20",
+    }
+
+
+async def test_actual_retrieve_async(
+    delete_all: None,
+    create_override: None,
+    actual_async_collections: AsyncCollections,
+) -> None:
+    """Test that the AsyncOverrides object can retrieve an override from Typesense Server."""
+    response = await actual_async_collections["companies"].overrides.retrieve()
 
     assert len(response["overrides"]) == 1
     assert_to_contain_object(

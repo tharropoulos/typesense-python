@@ -6,9 +6,12 @@ import pytest
 import requests
 from dotenv import load_dotenv
 
-from typesense.api_call import ApiCall
-from typesense.conversation_model import ConversationModel
-from typesense.conversations_models import ConversationsModels
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.conversation_model import AsyncConversationModel
+from typesense.async_.conversations_models import AsyncConversationsModels
+from typesense.sync.conversation_model import ConversationModel
+from typesense.sync.conversations_models import ConversationsModels
 
 load_dotenv()
 
@@ -79,6 +82,30 @@ def actual_conversations_models_fixture(
 ) -> ConversationsModels:
     """Return a ConversationsModels object using a real API."""
     return ConversationsModels(actual_api_call)
+
+
+@pytest.fixture(scope="function", name="actual_async_conversations_models")
+def actual_async_conversations_models_fixture(
+    actual_async_api_call: AsyncApiCall,
+) -> AsyncConversationsModels:
+    """Return a AsyncConversationsModels object using a real API."""
+    return AsyncConversationsModels(actual_async_api_call)
+
+
+@pytest.fixture(scope="function", name="fake_async_conversations_models")
+def fake_async_conversations_models_fixture(
+    fake_async_api_call: AsyncApiCall,
+) -> AsyncConversationsModels:
+    """Return a AsyncConversationsModels object with test values."""
+    return AsyncConversationsModels(fake_async_api_call)
+
+
+@pytest.fixture(scope="function", name="fake_async_conversation_model")
+def fake_async_conversation_model_fixture(
+    fake_async_api_call: AsyncApiCall,
+) -> AsyncConversationModel:
+    """Return a AsyncConversationModel object with test values."""
+    return AsyncConversationModel(fake_async_api_call, "conversation_model_id")
 
 
 @pytest.fixture(scope="function", name="create_conversation_history_collection")

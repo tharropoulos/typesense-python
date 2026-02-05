@@ -1,14 +1,11 @@
 """Unit tests for per-rule AnalyticsRule operations."""
 
-from __future__ import annotations
-
 import pytest
-import requests_mock
 
 from tests.utils.version import is_v30_or_above
-from typesense.client import Client
-from typesense.analytics_rule import AnalyticsRule
-from typesense.analytics_rules import AnalyticsRules
+from typesense.sync.client import Client
+from typesense.sync.analytics_rules import AnalyticsRules
+from typesense.async_.analytics_rules import AsyncAnalyticsRules
 
 
 pytestmark = pytest.mark.skipif(
@@ -22,30 +19,6 @@ pytestmark = pytest.mark.skipif(
     ),
     reason="Run analytics tests only on v30+",
 )
-
-
-def test_rule_retrieve(fake_api_call) -> None:
-    rule = AnalyticsRule(fake_api_call, "company_analytics_rule")
-    expected = {"name": "company_analytics_rule"}
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "http://nearest:8108/analytics/rules/company_analytics_rule",
-            json=expected,
-        )
-        resp = rule.retrieve()
-        assert resp == expected
-
-
-def test_rule_delete(fake_api_call) -> None:
-    rule = AnalyticsRule(fake_api_call, "company_analytics_rule")
-    expected = {"name": "company_analytics_rule"}
-    with requests_mock.Mocker() as mock:
-        mock.delete(
-            "http://nearest:8108/analytics/rules/company_analytics_rule",
-            json=expected,
-        )
-        resp = rule.delete()
-        assert resp == expected
 
 
 def test_actual_rule_retrieve(
@@ -65,4 +38,24 @@ def test_actual_rule_delete(
     create_analytics_rule: None,
 ) -> None:
     resp = actual_analytics_rules["company_analytics_rule"].delete()
+    assert resp["name"] == "company_analytics_rule"
+
+
+async def test_actual_rule_retrieve_async(
+    actual_async_analytics_rules: AsyncAnalyticsRules,
+    delete_all: None,
+    delete_all_analytics_rules: None,
+    create_analytics_rule: None,
+) -> None:
+    resp = await actual_async_analytics_rules["company_analytics_rule"].retrieve()
+    assert resp["name"] == "company_analytics_rule"
+
+
+async def test_actual_rule_delete_async(
+    actual_async_analytics_rules: AsyncAnalyticsRules,
+    delete_all: None,
+    delete_all_analytics_rules: None,
+    create_analytics_rule: None,
+) -> None:
+    resp = await actual_async_analytics_rules["company_analytics_rule"].delete()
     assert resp["name"] == "company_analytics_rule"

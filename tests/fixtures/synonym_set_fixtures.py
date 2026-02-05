@@ -3,9 +3,12 @@
 import pytest
 import requests
 
-from typesense.api_call import ApiCall
-from typesense.synonym_set import SynonymSet
-from typesense.synonym_sets import SynonymSets
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.synonym_set import AsyncSynonymSet
+from typesense.async_.synonym_sets import AsyncSynonymSets
+from typesense.sync.synonym_set import SynonymSet
+from typesense.sync.synonym_sets import SynonymSets
 
 
 @pytest.fixture(scope="function", name="create_synonym_set")
@@ -69,3 +72,31 @@ def fake_synonym_sets_fixture(fake_api_call: ApiCall) -> SynonymSets:
 def fake_synonym_set_fixture(fake_api_call: ApiCall) -> SynonymSet:
     """Return a SynonymSet object with test values."""
     return SynonymSet(fake_api_call, "test-set")
+
+
+@pytest.fixture(scope="function", name="actual_async_synonym_sets")
+def actual_async_synonym_sets_fixture(
+    actual_async_api_call: AsyncApiCall,
+) -> AsyncSynonymSets:
+    """Return a AsyncSynonymSets object using a real API."""
+    return AsyncSynonymSets(actual_async_api_call)
+
+
+@pytest.fixture(scope="function", name="actual_async_synonym_set")
+def actual_async_synonym_set_fixture(actual_async_api_call: AsyncApiCall) -> AsyncSynonymSet:
+    """Return a AsyncSynonymSet object using a real API."""
+    return AsyncSynonymSet(actual_async_api_call, "test-set")
+
+
+@pytest.fixture(scope="function", name="fake_async_synonym_sets")
+def fake_async_synonym_sets_fixture(
+    fake_async_api_call: AsyncApiCall,
+) -> AsyncSynonymSets:
+    """Return a AsyncSynonymSets object with test values."""
+    return AsyncSynonymSets(fake_async_api_call)
+
+
+@pytest.fixture(scope="function", name="fake_async_synonym_set")
+def fake_async_synonym_set_fixture(fake_async_api_call: AsyncApiCall) -> AsyncSynonymSet:
+    """Return a AsyncSynonymSet object with test values."""
+    return AsyncSynonymSet(fake_async_api_call, "test-set")

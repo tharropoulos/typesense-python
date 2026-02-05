@@ -2,10 +2,12 @@
 
 import pytest
 from tests.utils.version import is_v30_or_above
-from typesense.client import Client
+from typesense.sync.client import Client
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
-from typesense.analytics_v1 import AnalyticsV1
-from typesense.api_call import ApiCall
+from typesense.sync.analytics_v1 import AnalyticsV1
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.analytics_v1 import AsyncAnalyticsV1
 
 
 @pytest.mark.skipif(
@@ -31,6 +33,23 @@ def test_init(fake_api_call: ApiCall) -> None:
     assert_match_object(
         analytics.rules.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,
+    )
+
+    assert not analytics.rules.rules
+
+
+def test_init_async(fake_async_api_call: AsyncApiCall) -> None:
+    """Test that the AsyncAnalyticsV1 object is initialized correctly."""
+    analytics = AsyncAnalyticsV1(fake_async_api_call)
+
+    assert_match_object(analytics.rules.api_call, fake_async_api_call)
+    assert_object_lists_match(
+        analytics.rules.api_call.node_manager.nodes,
+        fake_async_api_call.node_manager.nodes,
+    )
+    assert_match_object(
+        analytics.rules.api_call.config.nearest_node,
+        fake_async_api_call.config.nearest_node,
     )
 
     assert not analytics.rules.rules

@@ -3,9 +3,12 @@
 import pytest
 import requests
 
-from typesense.alias import Alias
-from typesense.aliases import Aliases
-from typesense.api_call import ApiCall
+from typesense.sync.alias import Alias
+from typesense.sync.aliases import Aliases
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.alias import AsyncAlias
+from typesense.async_.aliases import AsyncAliases
 
 
 @pytest.fixture(scope="function", name="delete_all_aliases")
@@ -62,3 +65,25 @@ def fake_aliases_fixture(fake_api_call: ApiCall) -> Aliases:
 def fake_alias_fixture(fake_api_call: ApiCall) -> Alias:
     """Return a Alias object with test values."""
     return Alias(fake_api_call, "company_alias")
+
+
+@pytest.fixture(scope="function", name="actual_async_aliases")
+def actual_async_aliases_fixture(
+    actual_async_api_call: AsyncApiCall,
+) -> AsyncAliases:
+    """Return a AsyncAliases object using a real API."""
+    return AsyncAliases(actual_async_api_call)
+
+
+@pytest.fixture(scope="function", name="fake_async_aliases")
+def fake_async_aliases_fixture(
+    fake_async_api_call: AsyncApiCall,
+) -> AsyncAliases:
+    """Return a AsyncAliases object with test values."""
+    return AsyncAliases(fake_async_api_call)
+
+
+@pytest.fixture(scope="function", name="fake_async_alias")
+def fake_async_alias_fixture(fake_async_api_call: AsyncApiCall) -> AsyncAlias:
+    """Return a AsyncAlias object with test values."""
+    return AsyncAlias(fake_async_api_call, "company_alias")

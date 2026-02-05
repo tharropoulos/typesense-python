@@ -14,8 +14,6 @@ Exceptions:
     - ConfigError: Custom exception for configuration-related errors.
 """
 
-from __future__ import annotations
-
 import sys
 import time
 

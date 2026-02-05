@@ -3,9 +3,12 @@
 import pytest
 import requests
 
-from typesense.api_call import ApiCall
-from typesense.stopwords import Stopwords
-from typesense.stopwords_set import StopwordsSet
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.stopwords import AsyncStopwords
+from typesense.async_.stopwords_set import AsyncStopwordsSet
+from typesense.sync.stopwords import Stopwords
+from typesense.sync.stopwords_set import StopwordsSet
 
 
 @pytest.fixture(scope="function", name="create_stopword")
@@ -67,3 +70,27 @@ def fake_stopwords_fixture(fake_api_call: ApiCall) -> Stopwords:
 def fake_stopwords_set_fixture(fake_api_call: ApiCall) -> StopwordsSet:
     """Return a Collection object with test values."""
     return StopwordsSet(fake_api_call, "company_stopwords")
+
+
+@pytest.fixture(scope="function", name="actual_async_stopwords")
+def actual_async_stopwords_fixture(actual_async_api_call: AsyncApiCall) -> AsyncStopwords:
+    """Return a AsyncStopwords object using a real API."""
+    return AsyncStopwords(actual_async_api_call)
+
+
+@pytest.fixture(scope="function", name="actual_async_stopwords_set")
+def actual_async_stopwords_set_fixture(actual_async_api_call: AsyncApiCall) -> AsyncStopwordsSet:
+    """Return a AsyncStopwordsSet object using a real API."""
+    return AsyncStopwordsSet(actual_async_api_call, "company_stopwords")
+
+
+@pytest.fixture(scope="function", name="fake_async_stopwords")
+def fake_async_stopwords_fixture(fake_async_api_call: AsyncApiCall) -> AsyncStopwords:
+    """Return a AsyncStopwords object with test values."""
+    return AsyncStopwords(fake_async_api_call)
+
+
+@pytest.fixture(scope="function", name="fake_async_stopwords_set")
+def fake_async_stopwords_set_fixture(fake_async_api_call: AsyncApiCall) -> AsyncStopwordsSet:
+    """Return a AsyncStopwordsSet object with test values."""
+    return AsyncStopwordsSet(fake_async_api_call, "company_stopwords")

@@ -1,21 +1,15 @@
 """Tests for the CurationSet class including items APIs."""
 
-from __future__ import annotations
 
 import pytest
-import requests_mock
 
 from tests.utils.version import is_v30_or_above
-from typesense.client import Client
-from typesense.curation_set import CurationSet
-from typesense.curation_sets import CurationSets
-from typesense.types.curation_set import (
-    CurationItemDeleteSchema,
-    CurationItemSchema,
-    CurationSetDeleteSchema,
-    CurationSetListItemResponseSchema,
-    CurationSetSchema,
-)
+from typesense.async_.curation_set import AsyncCurationSet
+from typesense.async_.curation_sets import AsyncCurationSets
+from typesense.sync.client import Client
+from typesense.sync.curation_set import CurationSet
+from typesense.sync.curation_sets import CurationSets
+from typesense.types.curation_set import CurationItemSchema
 
 pytestmark = pytest.mark.skipif(
     not is_v30_or_above(
@@ -35,88 +29,9 @@ def test_paths(fake_curation_set: CurationSet) -> None:
     assert fake_curation_set._items_path == "/curation_sets/products/items"  # noqa: WPS437
 
 
-def test_retrieve(fake_curation_set: CurationSet) -> None:
-    json_response: CurationSetSchema = {
-        "name": "products",
-        "items": [],
-    }
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "/curation_sets/products",
-            json=json_response,
-        )
-        res = fake_curation_set.retrieve()
-        assert res == json_response
-
-
-def test_delete(fake_curation_set: CurationSet) -> None:
-    json_response: CurationSetDeleteSchema = {"name": "products"}
-    with requests_mock.Mocker() as mock:
-        mock.delete(
-            "/curation_sets/products",
-            json=json_response,
-        )
-        res = fake_curation_set.delete()
-        assert res == json_response
-
-
-def test_list_items(fake_curation_set: CurationSet) -> None:
-    json_response: CurationSetListItemResponseSchema = [
-        {
-            "id": "rule-1",
-            "rule": {"query": "shoe", "match": "contains"},
-            "includes": [{"id": "123", "position": 1}],
-        }
-    ]
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "/curation_sets/products/items?limit=10&offset=0",
-            json=json_response,
-        )
-        res = fake_curation_set.list_items(limit=10, offset=0)
-        assert res == json_response
-
-
-def test_get_item(fake_curation_set: CurationSet) -> None:
-    json_response: CurationItemSchema = {
-        "id": "rule-1",
-        "rule": {"query": "shoe", "match": "contains"},
-        "includes": [{"id": "123", "position": 1}],
-    }
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "/curation_sets/products/items/rule-1",
-            json=json_response,
-        )
-        res = fake_curation_set.get_item("rule-1")
-        assert res == json_response
-
-
-def test_upsert_item(fake_curation_set: CurationSet) -> None:
-    payload: CurationItemSchema = {
-        "id": "rule-1",
-        "rule": {"query": "shoe", "match": "contains"},
-        "includes": [{"id": "123", "position": 1}],
-    }
-    json_response = payload
-    with requests_mock.Mocker() as mock:
-        mock.put(
-            "/curation_sets/products/items/rule-1",
-            json=json_response,
-        )
-        res = fake_curation_set.upsert_item("rule-1", payload)
-        assert res == json_response
-
-
-def test_delete_item(fake_curation_set: CurationSet) -> None:
-    json_response: CurationItemDeleteSchema = {"id": "rule-1"}
-    with requests_mock.Mocker() as mock:
-        mock.delete(
-            "/curation_sets/products/items/rule-1",
-            json=json_response,
-        )
-        res = fake_curation_set.delete_item("rule-1")
-        assert res == json_response
+def test_paths_async(fake_async_curation_set: AsyncCurationSet) -> None:
+    assert fake_async_curation_set._endpoint_path == "/curation_sets/products"  # noqa: WPS437
+    assert fake_async_curation_set._items_path == "/curation_sets/products/items"  # noqa: WPS437
 
 
 def test_actual_retrieve(
@@ -164,3 +79,269 @@ def test_actual_delete(
 
     print(response)
     assert response == {"name": "products"}
+
+
+def test_actual_list_items(
+    actual_curation_sets: CurationSets,
+    delete_all_curation_sets: None,
+    create_curation_set: None,
+) -> None:
+    """Test that the CurationSet object can list items from Typesense Server."""
+    response = actual_curation_sets["products"].list_items()
+
+    assert response == [
+        {
+            "excludes": [
+                {
+                    "id": "999",
+                },
+            ],
+            "filter_curated_hits": False,
+            "id": "rule-1",
+            "includes": [
+                {
+                    "id": "123",
+                    "position": 1,
+                },
+            ],
+            "remove_matched_tokens": False,
+            "rule": {
+                "match": "contains",
+                "query": "shoe",
+            },
+            "stop_processing": True,
+        },
+    ]
+
+
+def test_actual_get_item(
+    actual_curation_sets: CurationSets,
+    delete_all_curation_sets: None,
+    create_curation_set: None,
+) -> None:
+    """Test that the CurationSet object can get a specific item from Typesense Server."""
+    response = actual_curation_sets["products"].get_item("rule-1")
+
+    assert response == {
+        "excludes": [
+            {
+                "id": "999",
+            },
+        ],
+        "filter_curated_hits": False,
+        "id": "rule-1",
+        "includes": [
+            {
+                "id": "123",
+                "position": 1,
+            },
+        ],
+        "remove_matched_tokens": False,
+        "rule": {
+            "match": "contains",
+            "query": "shoe",
+        },
+        "stop_processing": True,
+    }
+
+
+def test_actual_upsert_item(
+    actual_curation_sets: CurationSets,
+    delete_all_curation_sets: None,
+    create_curation_set: None,
+) -> None:
+    """Test that the CurationSet object can upsert an item in Typesense Server."""
+    payload: CurationItemSchema = {
+        "id": "rule-2",
+        "rule": {"query": "boot", "match": "exact"},
+        "includes": [{"id": "456", "position": 2}],
+        "excludes": [{"id": "888"}],
+    }
+    response = actual_curation_sets["products"].upsert_item("rule-2", payload)
+
+    assert response == {
+        "excludes": [
+            {
+                "id": "888",
+            },
+        ],
+        "id": "rule-2",
+        "includes": [
+            {
+                "id": "456",
+                "position": 2,
+            },
+        ],
+        "rule": {
+            "match": "exact",
+            "query": "boot",
+        },
+    }
+
+
+def test_actual_delete_item(
+    actual_curation_sets: CurationSets,
+    delete_all_curation_sets: None,
+    create_curation_set: None,
+) -> None:
+    """Test that the CurationSet object can delete an item from Typesense Server."""
+    response = actual_curation_sets["products"].delete_item("rule-1")
+
+    assert response == {"id": "rule-1"}
+
+
+async def test_actual_retrieve_async(
+    actual_async_curation_sets: AsyncCurationSets,
+    delete_all_curation_sets: None,
+    create_curation_set: None,
+) -> None:
+    """Test that the AsyncCurationSet object can retrieve a curation set from Typesense Server."""
+    response = await actual_async_curation_sets["products"].retrieve()
+
+    assert response == {
+        "items": [
+            {
+                "excludes": [
+                    {
+                        "id": "999",
+                    },
+                ],
+                "filter_curated_hits": False,
+                "id": "rule-1",
+                "includes": [
+                    {
+                        "id": "123",
+                        "position": 1,
+                    },
+                ],
+                "remove_matched_tokens": False,
+                "rule": {
+                    "match": "contains",
+                    "query": "shoe",
+                },
+                "stop_processing": True,
+            },
+        ],
+        "name": "products",
+    }
+
+
+async def test_actual_delete_async(
+    actual_async_curation_sets: AsyncCurationSets,
+    create_curation_set: None,
+) -> None:
+    """Test that the AsyncCurationSet object can delete a curation set from Typesense Server."""
+    response = await actual_async_curation_sets["products"].delete()
+
+    assert response == {"name": "products"}
+
+
+async def test_actual_list_items_async(
+    actual_async_curation_sets: AsyncCurationSets,
+    delete_all_curation_sets: None,
+    create_curation_set: None,
+) -> None:
+    """Test that the AsyncCurationSet object can list items from Typesense Server."""
+    response = await actual_async_curation_sets["products"].list_items()
+
+    assert response == [
+        {
+            "excludes": [
+                {
+                    "id": "999",
+                },
+            ],
+            "filter_curated_hits": False,
+            "id": "rule-1",
+            "includes": [
+                {
+                    "id": "123",
+                    "position": 1,
+                },
+            ],
+            "remove_matched_tokens": False,
+            "rule": {
+                "match": "contains",
+                "query": "shoe",
+            },
+            "stop_processing": True,
+        },
+    ]
+
+
+async def test_actual_get_item_async(
+    actual_async_curation_sets: AsyncCurationSets,
+    delete_all_curation_sets: None,
+    create_curation_set: None,
+) -> None:
+    """Test that the AsyncCurationSet object can get a specific item from Typesense Server."""
+    response = await actual_async_curation_sets["products"].get_item("rule-1")
+
+    assert response == {
+        "excludes": [
+            {
+                "id": "999",
+            },
+        ],
+        "filter_curated_hits": False,
+        "id": "rule-1",
+        "includes": [
+            {
+                "id": "123",
+                "position": 1,
+            },
+        ],
+        "remove_matched_tokens": False,
+        "rule": {
+            "match": "contains",
+            "query": "shoe",
+        },
+        "stop_processing": True,
+    }
+
+
+async def test_actual_upsert_item_async(
+    actual_async_curation_sets: AsyncCurationSets,
+    delete_all_curation_sets: None,
+    create_curation_set: None,
+) -> None:
+    """Test that the AsyncCurationSet object can upsert an item in Typesense Server."""
+    payload: CurationItemSchema = {
+        "id": "rule-2",
+        "rule": {"query": "boot", "match": "exact"},
+        "includes": [{"id": "456", "position": 2}],
+        "excludes": [{"id": "888"}],
+    }
+    response = await actual_async_curation_sets["products"].upsert_item(
+        "rule-2", payload
+    )
+
+    assert response == {
+        "excludes": [
+            {
+                "id": "888",
+            },
+        ],
+        "id": "rule-2",
+        "includes": [
+            {
+                "id": "456",
+                "position": 2,
+            },
+        ],
+        "rule": {
+            "match": "exact",
+            "query": "boot",
+        },
+    }
+
+
+async def test_actual_delete_item_async(
+    actual_async_curation_sets: AsyncCurationSets,
+    delete_all_curation_sets: None,
+    create_curation_set: None,
+) -> None:
+    """Test that the AsyncCurationSet object can delete an item from Typesense Server."""
+    response = await actual_async_curation_sets["products"].delete_item("rule-1")
+
+    assert response == {"id": "rule-1"}

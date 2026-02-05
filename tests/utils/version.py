@@ -1,6 +1,5 @@
-from __future__ import annotations
 
-from typesense.client import Client
+from typesense.sync.client import Client
 
 
 def is_v30_or_above(client: Client) -> bool:

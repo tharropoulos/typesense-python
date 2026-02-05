@@ -1,9 +1,6 @@
 """Tests for the SynonymSets class."""
 
-from __future__ import annotations
-
 import pytest
-import requests_mock
 
 from tests.utils.object_assertions import (
     assert_match_object,
@@ -11,13 +8,11 @@ from tests.utils.object_assertions import (
     assert_to_contain_object,
 )
 from tests.utils.version import is_v30_or_above
-from typesense.api_call import ApiCall
-from typesense.client import Client
-from typesense.synonym_sets import SynonymSets
-from typesense.types.synonym_set import (
-    SynonymSetCreateSchema,
-    SynonymSetSchema,
-)
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.synonym_sets import AsyncSynonymSets
+from typesense.sync.client import Client
+from typesense.sync.synonym_sets import SynonymSets
 
 pytestmark = pytest.mark.skipif(
     not is_v30_or_above(
@@ -45,69 +40,6 @@ def test_init(fake_api_call: ApiCall) -> None:
         synsets.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,
     )
-
-
-def test_retrieve(fake_synonym_sets: SynonymSets) -> None:
-    """Test that the SynonymSets object can retrieve synonym sets."""
-    json_response = [
-        {
-            "name": "test-set",
-            "items": [
-                {
-                    "id": "company_synonym",
-                    "root": "",
-                    "synonyms": ["companies", "corporations", "firms"],
-                }
-            ],
-        }
-    ]
-
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "http://nearest:8108/synonym_sets",
-            json=json_response,
-        )
-
-        response = fake_synonym_sets.retrieve()
-
-        assert isinstance(response, list)
-        assert len(response) == 1
-        assert response == json_response
-
-
-def test_create(fake_synonym_sets: SynonymSets) -> None:
-    """Test that the SynonymSets object can create a synonym set."""
-    json_response: SynonymSetSchema = {
-        "name": "test-set",
-        "items": [
-            {
-                "id": "company_synonym",
-                "synonyms": ["companies", "corporations", "firms"],
-            }
-        ],
-    }
-
-    with requests_mock.Mocker() as mock:
-        mock.put(
-            "http://nearest:8108/synonym_sets/test-set",
-            json=json_response,
-        )
-
-        payload: SynonymSetCreateSchema = {
-            "items": [
-                {
-                    "id": "company_synonym",
-                    "synonyms": ["companies", "corporations", "firms"],
-                }
-            ]
-        }
-        fake_synonym_sets["test-set"].upsert(payload)
-
-        assert mock.call_count == 1
-        assert mock.called is True
-        assert mock.last_request.method == "PUT"
-        assert mock.last_request.url == "http://nearest:8108/synonym_sets/test-set"
-        assert mock.last_request.json() == payload
 
 
 def test_actual_create(
@@ -145,6 +77,68 @@ def test_actual_retrieve(
 ) -> None:
     """Test that the SynonymSets object can retrieve a synonym set from Typesense Server."""
     response = actual_synonym_sets.retrieve()
+
+    assert isinstance(response, list)
+    assert_to_contain_object(
+        response[0],
+        {
+            "name": "test-set",
+        },
+    )
+
+
+def test_init_async(fake_async_api_call: AsyncApiCall) -> None:
+    """Test that the AsyncSynonymSets object is initialized correctly."""
+    from typesense.async_.synonym_sets import AsyncSynonymSets
+
+    synsets = AsyncSynonymSets(fake_async_api_call)
+
+    assert_match_object(synsets.api_call, fake_async_api_call)
+    assert_object_lists_match(
+        synsets.api_call.node_manager.nodes,
+        fake_async_api_call.node_manager.nodes,
+    )
+    assert_match_object(
+        synsets.api_call.config.nearest_node,
+        fake_async_api_call.config.nearest_node,
+    )
+
+
+async def test_actual_create_async(
+    actual_async_synonym_sets: AsyncSynonymSets,
+    delete_all_synonym_sets: None,
+) -> None:
+    """Test that the AsyncSynonymSets object can create a synonym set on Typesense Server."""
+    response = await actual_async_synonym_sets["test-set"].upsert(
+        {
+            "items": [
+                {
+                    "id": "company_synonym",
+                    "synonyms": ["companies", "corporations", "firms"],
+                }
+            ]
+        },
+    )
+
+    assert response == {
+        "name": "test-set",
+        "items": [
+            {
+                "id": "company_synonym",
+                "root": "",
+                "synonyms": ["companies", "corporations", "firms"],
+            }
+        ],
+    }
+
+
+async def test_actual_retrieve_async(
+    actual_async_synonym_sets: AsyncSynonymSets,
+    delete_all_synonym_sets: None,
+    create_synonym_set: None,
+) -> None:
+    """Test that the AsyncSynonymSets object can retrieve a synonym set from Typesense Server."""
+    response = await actual_async_synonym_sets.retrieve()
 
     assert isinstance(response, list)
     assert_to_contain_object(

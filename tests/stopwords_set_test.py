@@ -1,14 +1,11 @@
 """Tests for the StopwordsSet class."""
 
-from __future__ import annotations
-
-import requests_mock
-
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
-from typesense.api_call import ApiCall
-from typesense.stopwords import Stopwords
-from typesense.stopwords_set import StopwordsSet
-from typesense.types.stopword import StopwordDeleteSchema, StopwordSchema
+from typesense.sync.api_call import ApiCall
+from typesense.async_.api_call import AsyncApiCall
+from typesense.async_.stopwords import AsyncStopwords
+from typesense.sync.stopwords import Stopwords
+from typesense.sync.stopwords_set import StopwordsSet
 
 
 def test_init(fake_api_call: ApiCall) -> None:
@@ -26,52 +23,6 @@ def test_init(fake_api_call: ApiCall) -> None:
         fake_api_call.config.nearest_node,
     )
     assert stopword_set._endpoint_path == "/stopwords/company_stopwords"  # noqa: WPS437
-
-
-def test_retrieve(fake_stopwords_set: StopwordsSet) -> None:
-    """Test that the StopwordsSet object can retrieve an stopword_set."""
-    json_response: StopwordSchema = {
-        "id": "company_stopwords",
-        "stopwords": ["a", "an", "the"],
-    }
-
-    with requests_mock.Mocker() as mock:
-        mock.get(
-            "/stopwords/company_stopwords",
-            json=json_response,
-        )
-
-        response = fake_stopwords_set.retrieve()
-
-        assert len(mock.request_history) == 1
-        assert mock.request_history[0].method == "GET"
-        assert (
-            mock.request_history[0].url
-            == "http://nearest:8108/stopwords/company_stopwords"
-        )
-        assert response == json_response
-
-
-def test_delete(fake_stopwords_set: StopwordsSet) -> None:
-    """Test that the StopwordsSet object can delete an stopword_set."""
-    json_response: StopwordDeleteSchema = {
-        "id": "company_stopwords",
-    }
-    with requests_mock.Mocker() as mock:
-        mock.delete(
-            "/stopwords/company_stopwords",
-            json=json_response,
-        )
-
-        response = fake_stopwords_set.delete()
-
-        assert len(mock.request_history) == 1
-        assert mock.request_history[0].method == "DELETE"
-        assert (
-            mock.request_history[0].url
-            == "http://nearest:8108/stopwords/company_stopwords"
-        )
-        assert response == json_response
 
 
 def test_actual_retrieve(
@@ -97,5 +48,51 @@ def test_actual_delete(
 ) -> None:
     """Test that the StopwordsSet object can delete an stopword_set from Typesense Server."""
     response = actual_stopwords["company_stopwords"].delete()
+
+    assert response == {"id": "company_stopwords"}
+
+
+def test_init_async(fake_async_api_call: AsyncApiCall) -> None:
+    """Test that the AsyncStopwordsSet object is initialized correctly."""
+    from typesense.async_.stopwords_set import AsyncStopwordsSet
+
+    stopword_set = AsyncStopwordsSet(fake_async_api_call, "company_stopwords")
+
+    assert stopword_set.stopwords_set_id == "company_stopwords"
+    assert_match_object(stopword_set.api_call, fake_async_api_call)
+    assert_object_lists_match(
+        stopword_set.api_call.node_manager.nodes,
+        fake_async_api_call.node_manager.nodes,
+    )
+    assert_match_object(
+        stopword_set.api_call.config.nearest_node,
+        fake_async_api_call.config.nearest_node,
+    )
+    assert stopword_set._endpoint_path == "/stopwords/company_stopwords"  # noqa: WPS437
+
+
+async def test_actual_retrieve_async(
+    actual_async_stopwords: AsyncStopwords,
+    delete_all_stopwords: None,
+    delete_all: None,
+    create_stopword: None,
+) -> None:
+    """Test that the AsyncStopwordsSet object can retrieve an stopword_set from Typesense Server."""
+    response = await actual_async_stopwords["company_stopwords"].retrieve()
+
+    assert response == {
+        "stopwords": {
+            "id": "company_stopwords",
+            "stopwords": ["and", "is", "the"],
+        },
+    }
+
+
+async def test_actual_delete_async(
+    actual_async_stopwords: AsyncStopwords,
+    create_stopword: None,
+) -> None:
+    """Test that the AsyncStopwordsSet object can delete an stopword_set from Typesense Server."""
+    response = await actual_async_stopwords["company_stopwords"].delete()
 
     assert response == {"id": "company_stopwords"}
