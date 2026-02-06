@@ -23,6 +23,8 @@ def collect_class_replacements(source_dir: Path) -> dict[str, str]:
             async_name = match.group(1)
             replacements[async_name] = async_name[len("Async") :]
     replacements["aclose"] = "close"
+    replacements["aiter_lines"] = "iter_lines"
+    replacements["aread"] = "read"
     return replacements
 
 
