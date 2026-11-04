@@ -102,8 +102,9 @@ class AsyncClient:
             http_client (httpx.AsyncClient | httpx2.AsyncClient, optional):
                 A client to send requests with instead of the default httpx client,
                 e.g. an ``httpx2.AsyncClient`` (``pip install typesense[httpx2]``).
-                The connection pool and ``verify`` settings in ``config_dict`` are
-                not applied to it, and the Typesense client does not close it.
+                The connection pool, connection lifetime and ``verify`` settings in
+                ``config_dict`` are not applied to it, and the Typesense client does
+                not close it.
 
         Example:
             >>> config = {

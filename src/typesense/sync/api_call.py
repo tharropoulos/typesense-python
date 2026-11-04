@@ -38,6 +38,7 @@ from types import MappingProxyType, TracebackType
 
 import httpx
 
+from typesense.client_rotation import ClientRotation
 from typesense.concurrency_limit import ConcurrencyLimit
 from typesense.configuration import Configuration, Node
 from typesense.exceptions import (
@@ -155,8 +156,8 @@ class ApiCall:
     Attributes:
         config (Configuration): The configuration object for the Typesense client.
         node_manager (NodeManager): Manages the nodes in the Typesense cluster.
-        _client (httpx.Client | httpx2.Client): The async client for
-            making requests.
+        _clients (ClientRotation): Hands out the client each request is sent
+            with.
     """
 
     def __init__(
@@ -171,8 +172,8 @@ class ApiCall:
             config (Configuration): The configuration object for the Typesense client.
             http_client (httpx.Client | httpx2.Client, optional): A client
                 to send requests with instead of the default httpx client. The
-                connection pool and ``verify`` settings in ``config`` are not
-                applied to it, and it is not closed by ``close``.
+                connection pool, connection lifetime and ``verify`` settings in
+                ``config`` are not applied to it, and it is not closed by ``close``.
 
         Raises:
             TypeError: If ``http_client`` is not an httpx or httpx2 async client.
@@ -189,18 +190,12 @@ class ApiCall:
                 raise TypeError(
                     "`http_client` must be an httpx.Client or httpx2.Client.",
                 )
-            self._client: SyncClientType = http_client
+            self._clients = ClientRotation(lambda: http_client, None)
             return
-        self._client = httpx.Client(
-            timeout=httpx.Timeout(
-                config.connection_timeout_seconds,
-                pool=config.pool_timeout_seconds,
-            ),
-            limits=httpx.Limits(
-                max_connections=config.max_connections,
-                max_keepalive_connections=config.max_keepalive_connections,
-            ),
-            verify=verify_option(config.verify),
+        self._verify = verify_option(config.verify)
+        self._clients = ClientRotation(
+            self._build_client,
+            config.max_connection_lifetime_seconds,
         )
 
     def __enter__(self) -> "ApiCall":
@@ -217,9 +212,24 @@ class ApiCall:
         self.close()
 
     def close(self) -> None:
-        """Close the httpx client, unless it was passed in by the caller."""
+        """Close the httpx clients, unless the client was passed in by the caller."""
         if self._owns_client:
-            self._client.close()
+            self._clients.close()
+
+    def _build_client(self) -> httpx.Client:
+        """Build an httpx client from the connection pool settings."""
+        return httpx.Client(
+            timeout=httpx.Timeout(
+                self.config.connection_timeout_seconds,
+                pool=self.config.pool_timeout_seconds,
+            ),
+            limits=httpx.Limits(
+                max_connections=self.config.max_connections,
+                max_keepalive_connections=self.config.max_keepalive_connections,
+            ),
+            # Loaded once, so a replacement client works even if the CA bundle is gone.
+            verify=self._verify,
+        )
 
     @typing.overload
     def get(
@@ -546,13 +556,13 @@ class ApiCall:
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> typing.Union[TEntityDict, str]:
         """Make the async API request to `node` and process the response."""
-        with self._concurrency_limit:
+        with self._concurrency_limit, self._clients.lease() as client:
             request_response = self.request_handler.make_request(
                 method=method,
                 url=url,
                 as_json=as_json,
                 entity_type=entity_type,
-                client=self._client,
+                client=client,
                 **kwargs,
             )
         self.node_manager.set_node_health(node, is_healthy=True)
@@ -642,17 +652,23 @@ class ApiCall:
         """
         Send a streaming request to `node` and return the stream once headers arrive.
 
-        The stream holds a concurrency slot until it is closed. Reads use
-        ``stream_read_timeout_seconds``, since the first piece of an answer only
-        arrives once the LLM starts generating it.
+        The stream holds a concurrency slot and its client until it is closed.
+        Reads use ``stream_read_timeout_seconds``, since the first piece of an
+        answer only arrives once the LLM starts generating it.
         """
         request_kwargs = self.request_handler.build_request_kwargs(**kwargs)
         headers = request_kwargs.get("headers", {})
         headers["Accept"] = "text/event-stream"
-        timeout = self._client.timeout
-        # Annotated so httpx and httpx2 responses unify as ``ResponseType``.
-        response_context: typing.ContextManager[ResponseType] = (
-            self._client.stream(
+
+        # Owns the slot, the client and the response until the stream is closed.
+        exit_stack = ExitStack()
+        self._concurrency_limit.acquire()
+        exit_stack.callback(self._concurrency_limit.release)
+        try:
+            client = exit_stack.enter_context(self._clients.lease())
+            timeout = client.timeout
+            # Annotated so httpx and httpx2 responses unify as ``ResponseType``.
+            response_context: typing.ContextManager[ResponseType] = client.stream(
                 method,
                 url,
                 params=typing.cast(
@@ -668,13 +684,6 @@ class ApiCall:
                     timeout.pool,
                 ),
             )
-        )
-
-        # Owns the concurrency slot and the response until the stream is closed.
-        exit_stack = ExitStack()
-        self._concurrency_limit.acquire()
-        exit_stack.callback(self._concurrency_limit.release)
-        try:
             response = exit_stack.enter_context(response_context)
             if response.status_code < 200 or response.status_code >= 300:
                 response.read()

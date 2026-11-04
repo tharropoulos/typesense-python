@@ -23,7 +23,7 @@ def pool_ssl_context(api_call) -> ssl.SSLContext:
 
     This reads private httpx 0.28 attributes and may need updating on upgrades.
     """
-    return api_call._client._transport._pool._ssl_context
+    return api_call._clients._client._transport._pool._ssl_context
 
 
 async def close_api_call(api_call):

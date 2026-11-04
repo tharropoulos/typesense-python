@@ -135,7 +135,7 @@ def test_close_closes_default_client(fake_config: Configuration) -> None:
 
     api_call.close()
 
-    assert api_call._client.is_closed is True
+    assert api_call._clients._client.is_closed is True
 
 
 async def test_async_close_leaves_user_supplied_client_open(
