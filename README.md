@@ -67,7 +67,23 @@ client = typesense.AsyncClient(
 )
 ```
 
-`typesense.Client` takes an `httpx2.Client` the same way. The connection pool settings in the config (`pool_timeout_seconds`, `max_connections`, `max_keepalive_connections`) only apply to the default client, so set them on your own client instead. The Typesense client does not close a client you pass in.
+`typesense.Client` takes an `httpx2.Client` the same way. The connection pool settings in the config (`pool_timeout_seconds`, `max_connections`, `max_keepalive_connections`, `max_connection_lifetime_seconds`) only apply to the default client, so set them on your own client instead. The Typesense client does not close a client you pass in.
+
+## Connection lifetime
+
+The client keeps its connections open and reuses them. When several nodes sit behind one load balancer, each connection stays on the node it first reached, so traffic can pile up on one of them. Set `max_connection_lifetime_seconds` to replace the client's httpx client once it reaches that age, so later requests open new connections:
+
+```python
+client = typesense.Client(
+    {
+        "api_key": "abcd",
+        "nodes": [{"host": "search.example.com", "port": "443", "protocol": "https"}],
+        "max_connection_lifetime_seconds": 300,
+    }
+)
+```
+
+Requests and streams already in flight finish on the old httpx client, and the Typesense client closes it once they are done. Until then, the old client's idle connections stay open next to the new client's, so the total can briefly exceed `max_connections`. Each httpx client lasts up to 10% longer than the setting, at random, so clients started together don't reconnect together. The setting is off by default and only applies to the default client, so it never replaces an `http_client` you pass in.
 
 ## Compatibility
 
