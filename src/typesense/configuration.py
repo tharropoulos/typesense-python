@@ -14,6 +14,7 @@ Exceptions:
     - ConfigError: Custom exception for configuration-related errors.
 """
 
+import math
 import ssl
 import sys
 import time
@@ -108,6 +109,15 @@ class ConfigDict(typing.TypedDict):
             Replaces the read timeout for streaming requests only, since the first
             chunk arrives only once the LLM starts answering. Defaults to 60, the
             server's own limit for an LLM response.
+
+        max_connection_lifetime_seconds (float | None): How long the client sends
+            new requests with one httpx client before replacing it, so connections
+            are reopened. When several nodes sit behind one load balancer, this
+            spreads kept-alive connections across them. Each client lasts up to 10%
+            longer, at random, so clients started together do not reconnect together.
+            Requests already sent finish on the old client. Has no effect on an
+            ``http_client`` passed in by the caller. Defaults to ``None``, which keeps
+            one client for good.
     """
 
     nodes: typing.List[typing.Union[str, NodeConfigDict]]
@@ -131,6 +141,7 @@ class ConfigDict(typing.TypedDict):
     max_keepalive_connections: typing.NotRequired[int]
     max_concurrent_requests: typing.NotRequired[int]
     stream_read_timeout_seconds: typing.NotRequired[float]
+    max_connection_lifetime_seconds: typing.NotRequired[typing.Optional[float]]
 
 
 class Node:
@@ -228,6 +239,8 @@ class Configuration:
         max_keepalive_connections (int): The maximum number of idle pooled connections.
         max_concurrent_requests (int | None): The maximum number of requests in flight.
         stream_read_timeout_seconds (float): How long a stream waits for its next chunk.
+        max_connection_lifetime_seconds (float | None): How long one httpx client is
+            used before it is replaced.
     """
 
     def __init__(
@@ -287,6 +300,9 @@ class Configuration:
         self.stream_read_timeout_seconds = config_dict.get(
             "stream_read_timeout_seconds",
             60.0,
+        )
+        self.max_connection_lifetime_seconds = config_dict.get(
+            "max_connection_lifetime_seconds",
         )
 
     def _handle_nearest_node(
@@ -379,6 +395,17 @@ class ConfigurationValidations:
         max_keepalive_connections = config_dict.get("max_keepalive_connections")
         if max_keepalive_connections is not None and max_keepalive_connections < 0:
             raise ConfigError("`max_keepalive_connections` must not be negative.")
+
+        lifetime: object = config_dict.get("max_connection_lifetime_seconds")
+        if lifetime is not None and (
+            isinstance(lifetime, bool)
+            or not isinstance(lifetime, (int, float))
+            or not math.isfinite(lifetime)
+            or lifetime <= 0
+        ):
+            raise ConfigError(
+                "`max_connection_lifetime_seconds` must be a finite number greater than 0.",
+            )
 
     @staticmethod
     def validate_required_config_fields(config_dict: ConfigDict) -> None:
